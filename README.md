@@ -1,8 +1,6 @@
 # qproc-mongo
 
-`qproc-mongo` generates query string processors (middleware) to use in your Express/Connect application routes. These processors translate query string parameters into usable MongoDB query parameters. After a qproc processor executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
-
-NOTE: A query string parser, like [query-string][query-string-url], is likely already being used in your app to set `req.query`. If `req.query` is missing or empty, then the processor will set `req.qproc` to [these values](#missing-or-empty-req.query).
+`qproc-mongo` generates query string processors (middleware) to use in your Express/Connect application routes. These processors translate query string parameters, in `req.query`, into usable MongoDB query parameters. After a qproc processor executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
 
 ## Table of Contents
 
@@ -66,13 +64,13 @@ app.use('/api/events', myQprocProcessor, (req, res) => {
 });
 ```
 
-For this example, the request looks like this...
+For this example, the request URI looks like this...
 
 ```
 http://localhost:3000/api/events?eventType=in:music,sports&eventDate=gt:2018-01-01,lt:2019-01-01&ticketCount=lt:1000&ticketCost=gte:299.99
 ```
 
-First, this request's query string should be handled by something like `query-string` so that `req.query` looks like this...
+The `req.query` then looks like this...
 
 ```js
 {
@@ -381,5 +379,3 @@ These are valid MongoDB query parameters but probably shouldn't be used since it
 - Add an alternate searchKey that generates a filter for collections that do not use text indexes
 - Add support for $or
 - Add support for $regex
-
-[query-string-url]: https://www.npmjs.com/package/query-string
