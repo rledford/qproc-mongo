@@ -107,13 +107,17 @@ module.exports = {
 
         if (k === sortKey) {
           const sorts = req.query[sortKey].split(',');
+          let match = /^asc:|^desc:/g;
 
           sorts.forEach(function(sort) {
             let field = sort;
             let order = -1; // defaults to descending
-            if (/^\+|\-/.test(sort)) {
-              field = sort.substring(1);
-              order = sort[0] === '+' ? 1 : -1;
+            if (match.test(sort)) {
+              console.log(sort.substring(0, match.lastIndex - 1));
+              field = sort.substring(match.lastIndex);
+              order = sort.substring(0, match.lastIndex - 1) == 'asc' ? 1 : -1;
+
+              match.lastIndex = 0; // reset lastIndex
             }
 
             Object.assign((req.qproc[sortKey][field] = order));
