@@ -1,16 +1,18 @@
 `qproc-mongo` generates query string processors (middleware) to use in your Express/Connect application routes. These processors translate query string parameters into usable MongoDB query parameters. After a qproc processor executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
 
-NOTE: A query string parser, like [query-string][query-string-url], is likely already being used in your app to set `req.query`. If `req.query` is missing or empty, then the processor will set `req.qproc` using [default values](#missing-req.query).
+NOTE: A query string parser, like [query-string][query-string-url], is likely already being used in your app to set `req.query`. If `req.query` is missing or empty, then the processor will set `req.qproc` using [default values](#options).
 
 ### Table of Contents
 
 - [Install](#install)
 - [Usage](#usage)
+- [Supported Operators](#supported-operators)
 - [Options](#options)
   - [Fields](#fields)
   - [Keys](#keys)
   - [Search Key](#search-key)
 - [Misc](#misc)
+- [To Do](#to-do)
 
 ### Install
 
@@ -86,13 +88,37 @@ After `myQprocProcessor` executes, the `req.qproc` result looks like this...
     ticketCount: { '$lt': 1000 },
     ticketCost: { '$gte': 299.99 }
   },
-  sort: {},
   limit: 0,
   skip: 0
+  sort: {},
 }
 ```
 
 Now the `req.qproc` result can be used to execute a query that would be able to find any document that has an `eventType` of `music` or `sports`, is within the provided `eventDate` constraints, has a `ticketCount` that is less than 1000, and has a `ticketCost` that is greater than or equal lto 299.99.
+
+### Supported Operators
+
+#### Filter Operators
+
+| Operator | Description                                                  |
+| -------- | ------------------------------------------------------------ |
+| eq       | equal                                                        |
+| ne       | not equal                                                    |
+| in       | in a list of values - Multiple values separated by a `,`     |
+| nin      | not in a list of values - Multiple values separated by a `,` |
+| gt       | greater than                                                 |
+| gte      | greater than or equal to                                     |
+| lt       | less than                                                    |
+| lte      | less than or equal to                                        |
+
+#### Sort Order Operators
+
+The sort order operators need to be before the field name. The default sort order is **descending** when a sort order operator is not present.
+
+| Operator | Description | Example      |
+| -------- | ----------- | ------------ |
+| +        | Ascending   | `+eventDate` |
+| -        | Descending  | `-eventDate` |
 
 ### Options
 
@@ -191,5 +217,11 @@ When a processor executes on a request that has a missing or empty `req.query` i
 ```
 
 These are valid MongoDB query parameters but probably shouldn't be used since it would result in every document being returned. It is up to you to make sure that properties, like `limit`, are clamped to whatever min/max you think are necessary.
+
+### To Do
+
+- Explain sorting (single and multi-field) and provide an example
+- Explain how to use comma seperated values for fields using $in, $nin, and other operators
+- Provide a working example of an Express app that uses qproc-mongo
 
 [query-string-url]: https://www.npmjs.com/package/query-string
