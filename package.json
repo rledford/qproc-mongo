@@ -1,6 +1,6 @@
 {
   "name": "qproc-mongo",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Generates query string processors (middleware) to use with Express/Connect. The processors translate query string parameters into usable MongoDB query parameters.",
   "main": "index.js",
   "scripts": {
