@@ -376,7 +376,8 @@ These are valid MongoDB query parameters but probably shouldn't be used since it
 ## To Do
 
 - Provide a working example of an Express app that uses qproc-mongo
+- Add an alternate searchKey that generates a filter for collections that do not use text indexes
 - Add support for $or
-- Add alternate key for a 'search' filter that will not utilize a collections text indexes
+- Add support for $regex
 
 [query-string-url]: https://www.npmjs.com/package/query-string
