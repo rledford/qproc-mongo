@@ -1,8 +1,10 @@
+# qproc-mongo
+
 `qproc-mongo` generates query string processors (middleware) to use in your Express/Connect application routes. These processors translate query string parameters into usable MongoDB query parameters. After a qproc processor executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
 
 NOTE: A query string parser, like [query-string][query-string-url], is likely already being used in your app to set `req.query`. If `req.query` is missing or empty, then the processor will set `req.qproc` to [these values](#missing-or-empty-req.query).
 
-### Table of Contents
+## Table of Contents
 
 - [Install](#install)
 - [Usage](#usage)
@@ -15,13 +17,17 @@ NOTE: A query string parser, like [query-string][query-string-url], is likely al
 - [Notes](#notes)
 - [To Do](#to-do)
 
-### Install
+---
+
+## Install
 
 ```
 npm install qproc-mongo
 ```
 
-### Usage
+---
+
+## Usage
 
 ```js
 /*
@@ -97,9 +103,11 @@ After `myQprocProcessor` executes, the `req.qproc` result looks like this...
 
 Now the `req.qproc` result can be used to execute a query that would be able to find any document that has an `eventType` of `music` or `sports`, is within the provided `eventDate` constraints, has a `ticketCount` that is less than 1000, and has a `ticketCost` that is greater than or equal lto 299.99.
 
-### Supported Operators
+---
 
-#### Filter Operators
+## Supported Operators
+
+### Filter Operators
 
 | Operator | Description                                                  | MongoDB Operator |
 | -------- | ------------------------------------------------------------ | ---------------- |
@@ -112,16 +120,18 @@ Now the `req.qproc` result can be used to execute a query that would be able to 
 | lt       | Less than                                                    | `$lt`            |
 | lte      | Less than or equal to                                        | `$lte`           |
 
-#### Sort Order Operators
+### Sort Order Operators
 
-The sort order operators need to be before the field name. The default sort order is **descending** when a sort order operator is not present.
+The sort order operators need to be **before** the field name. The default sort order is **descending** when a sort order operator is not present.
 
 | Operator | Description | Example      |
 | -------- | ----------- | ------------ |
 | +        | Ascending   | `+eventDate` |
 | -        | Descending  | `-eventDate` |
 
-### Options
+---
+
+## Options
 
 | Option    | Default  | Description                                                                       |
 | --------- | -------- | --------------------------------------------------------------------------------- |
@@ -131,7 +141,7 @@ The sort order operators need to be before the field name. The default sort orde
 | sortKey   | `sort`   | used to identify the sort parameter                                               |
 | searchKey | `search` | used to identify the search parameter                                             |
 
-#### Fields
+### Fields
 
 Fields should be set using a field name and its type. The available types are `String`, `Date`, `Int`, and `Float`. The types should be set using the `qproc-mongo` module like this.
 
@@ -147,9 +157,9 @@ const options = {
 const processor = qproc.createProcessor(options);
 ```
 
-#### Keys
+### Keys
 
-If you need to have a different key identifiers, other than `limit`, `skip`, `sort`, and `search`, because they are being used by the documents in your collection, or you just prefer something else, you can set them in the options.
+If you need to have different key identifiers, other than `limit`, `skip`, `sort`, and `search`, because they are being used by the documents in your collection, or you just prefer something else, you can set them in the options.
 
 ```js
 const qproc = require('qproc-mongo');
@@ -175,9 +185,9 @@ When the above processor executes, `req.qproc` will look like this...
 }
 ```
 
-What happens here is that the processor uses the keys for both searching the `req.query` input and the `req.qroc` results. So you don't have to keep track of which key is used in processing and which one is used in the result. If you set the `limitKey` to 'count', then you will access the value with `req.qproc.count` (not req.qproc.limit);
+Notice that the processor uses the keys for both searching the `req.query` input and the `req.qroc` results. So you don't have to keep track of which key is used in processing and which one is used in the result. If you set the `limitKey` to 'count', then you will access the value with `req.qproc.count` (not req.qproc.limit);
 
-#### Search Key
+### Search Key
 
 When the `searchKey` is detected, no matter what other fields are present in `req.query`, the `req.qproc` result will look like this...
 
@@ -196,13 +206,15 @@ When the `searchKey` is detected, no matter what other fields are present in `re
 
 NOTE: `limit`, `skip`, and `sort` will have whatever values are found in the `req.query` input.
 
-There are some assumptions being made here about the underlying collection that will be queried. The most important thing to note is that this filter will only work on collections that have a **text index**. Usually, when text searches are performed on a collection, a **text index** exists. If you want to search multiple fields for matches on text without using the MongoDB text search method, then you can check if `req.qproc.filter.$text` exists and do whatever you want with the `$search` value.
+There are some assumptions being made here about the underlying collection that will be queried. The most important thing to note is that this filter will only work on collections that have a **text index**. Usually, when text searches are performed on a collection, a **text index** should exist. If you want to search multiple fields for matches on text without using the MongoDB text search method, then you can check if `req.qproc.filter.$text` exists and do whatever you want with the `$search` value.
 
-### Examples
+---
+
+## Examples
 
 Let's assume that the following examples are going to be processed by the `myQprocProcessor` we used in the above [Usage](#usage) section.
 
-#### Basic Filter
+### Basic Filter
 
 **Request URI**
 
@@ -221,7 +233,7 @@ Let's assume that the following examples are going to be processed by the `myQpr
 }
 ```
 
-#### Filter with Ranges
+### Filter with Ranges
 
 **Request URI**
 
@@ -247,7 +259,7 @@ Let's assume that the following examples are going to be processed by the `myQpr
 }
 ```
 
-#### Filter and Sort
+### Filter and Sort
 
 **Request URI**
 
@@ -269,7 +281,7 @@ Let's assume that the following examples are going to be processed by the `myQpr
 }
 ```
 
-#### Using in: to Filter with a List of Values
+### Using in: to Filter with a List of Values
 
 **Request URI**
 
@@ -292,7 +304,7 @@ NOTE: The values that follow `in:` are comma-delimited without spaces between th
 }
 ```
 
-#### Using nin: to Filter with a List of Values
+### Using nin: to Filter with a List of Values
 
 **Request URI**
 
@@ -315,7 +327,7 @@ NOTE: The values that follow `nin:` are comma-delimited without spaces between t
 }
 ```
 
-#### Using Limit and Skip for Pagination
+### Using Limit and Skip for Pagination
 
 **Request URI**
 
@@ -337,13 +349,15 @@ NOTE: Any combination of filters and sorts can be used with limit and skip.
 }
 ```
 
-### Notes
+---
 
-#### createProcessor(options)
+## Notes
+
+### createProcessor(options)
 
 When `createProcessor()` is called without providing any `options`, a warning message will be shown in the console. A processor that is using the default options will always have the `req.qproc.filter` value set to `{}`, so be careful.
 
-#### Missing or Empty req.query
+### Missing or Empty req.query
 
 When a processor executes on a request that has a missing or empty `req.query` input, the `req.qproc` result will look like this...
 
@@ -358,9 +372,12 @@ When a processor executes on a request that has a missing or empty `req.query` i
 
 These are valid MongoDB query parameters but probably shouldn't be used since it would result in every document being returned. It is up to you to make sure that properties, like `limit`, are clamped to whatever min/max you think are necessary.
 
-### To Do
+---
+
+## To Do
 
 - Provide a working example of an Express app that uses qproc-mongo
 - Add support for $or
+- Add alternate key for a 'search' filter that will not utilize a collections text indexes
 
 [query-string-url]: https://www.npmjs.com/package/query-string
