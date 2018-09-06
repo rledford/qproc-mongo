@@ -15,7 +15,7 @@ const req = {
     eventDate: 'gt:2018-01-01,lt:2019-01-01',
     ticketCount: 'lt:1000',
     ticketCost: 'gte:299.99',
-    sort: '-eventDate,+ticketCount',
+    sort: 'desc:eventDate,asc:ticketCount',
     limit: '100'
   }
 };
