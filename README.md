@@ -254,7 +254,7 @@ Let's assume that the following examples are going to be processed by the `myQpr
       $gt: 30.0,
       $lt: 100.0
     }
-  }
+  },
   /* omitted */
 }
 ```
@@ -299,7 +299,7 @@ NOTE: The values that follow `in:` are comma-delimited without spaces between th
     eventType: {
       $in: ['music', 'sports'];
     }
-  }
+  },
   /* omitted */
 }
 ```
@@ -335,16 +335,15 @@ NOTE: The values that follow `nin:` are comma-delimited without spaces between t
 /api/events?limit=100&skip=200
 ```
 
-NOTE: Any combination of filters and sorts can be used with limit and skip.
+NOTE: Any combination of field filters and sorts can be used with limit and skip.
 
 **req.qproc Result**
 
 ```js
 {
-  filter: {}
-  },
+  filter: {},
   limit: 100,
-  skip: 200
+  skip: 200,
   /* omitted */
 }
 ```
