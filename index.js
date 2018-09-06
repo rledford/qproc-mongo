@@ -35,7 +35,18 @@ function convertStringToType(str, type) {
 
 function validateOptions(options) {
   if (typeof options.fields !== 'object' || Array.isArray(options.fields)) {
-    throw new Error('invalid fields - must be an object of key/value pairs');
+    console.warn(
+      'qproc-mongo :: WARN ::',
+      'invalid fields - must be an object of key/value pairs'
+    );
+    options.fields = {};
+  }
+
+  if (Object.keys(options.fields).length === 0) {
+    console.warn(
+      'qproc-mongo :: WARN ::',
+      'missing field definitions! the filter result will always be an empty object {}'
+    );
   }
 
   for (let field in options.fields) {
@@ -45,16 +56,32 @@ function validateOptions(options) {
   }
 
   if (typeof options.sortKey !== 'string') {
-    throw new Error('sortKey must be a string');
+    console.warn(
+      'qproc-mongo :: WARN ::',
+      'missing valid sortKey - must be a string - using default "sort"'
+    );
+    options.sortKey = 'sort';
   }
   if (typeof options.limitKey !== 'string') {
-    throw new Error('limitKey must be a string');
+    console.warn(
+      'qproc-mongo :: WARN ::',
+      'missing valid limitKey - must be a string - using default "limit"'
+    );
+    options.limitKey = 'limit';
   }
   if (typeof options.skipKey !== 'string') {
-    throw new Error('skipKey must be a string');
+    console.warn(
+      'qproc-mongo :: WARN ::',
+      'missing valid skipKey - must be a string - using default "skip"'
+    );
+    options.skipKey = 'skip';
   }
   if (typeof options.searchKey !== 'string') {
-    throw new Error('searchKey must be a string');
+    console.warn(
+      'qproc-mongo :: WARN ::',
+      'missing valid searchKey - must be a string - using default "search"'
+    );
+    options.searchKey = 'search';
   }
 }
 
@@ -63,6 +90,7 @@ module.exports = {
     if (!options) {
       options = this.createOptions();
       console.warn(
+        'qproc-mongo :: WARN ::',
         `options were not provided to createProcessor - using default ${JSON.stringify(
           options
         )}`
@@ -113,7 +141,6 @@ module.exports = {
             let field = sort;
             let order = -1; // defaults to descending
             if (match.test(sort)) {
-              console.log(sort.substring(0, match.lastIndex - 1));
               field = sort.substring(match.lastIndex);
               order = sort.substring(0, match.lastIndex - 1) == 'asc' ? 1 : -1;
 
