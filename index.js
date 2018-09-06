@@ -200,7 +200,7 @@ module.exports = {
         }
 
         if (k === searchKey) {
-          req.qproc.filter = { $text: { $seach: req.query[k] } };
+          req.qproc.filter = { $text: { $search: req.query[k] } };
         }
       }
 
