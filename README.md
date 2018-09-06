@@ -101,7 +101,7 @@ After `myQprocProcessor` executes, the `req.qproc` result looks like this...
 }
 ```
 
-Now the `req.qproc` result can be used to execute a query that would be able to find any document that has an `eventType` of `music` or `sports`, is within the provided `eventDate` constraints, has a `ticketCount` that is less than 1000, and has a `ticketCost` that is greater than or equal lto 299.99.
+This `req.qproc` result can be used to execute a query that will find any document that has an `eventType` of `music` or `sports`, is within the provided `eventDate` constraints, has a `ticketCount` that is less than 1000, and has a `ticketCost` that is greater than or equal to 299.99.
 
 ---
 
