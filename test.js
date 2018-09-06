@@ -14,9 +14,12 @@ const req = {
     eventType: 'in:music,sports',
     eventDate: 'gt:2018-01-01,lt:2019-01-01',
     ticketCount: 'lt:1000',
-    ticketCost: 'gte:299.99'
+    ticketCost: 'gte:299.99',
+    sort: '-eventDate,+ticketCount',
+    limit: '100'
   }
 };
+const res = {};
 const next = function(err) {
   if (err) {
     console.log(err);
@@ -25,6 +28,6 @@ const next = function(err) {
 
 console.log('********** START **********');
 console.log('** INPUT **\n', req.query);
-test(req, null, next);
+test(req, res, next);
 console.log('** OUTPUT **\n', req.qproc);
 console.log('*********** END ***********');
