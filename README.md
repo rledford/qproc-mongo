@@ -12,7 +12,7 @@ NOTE: A query string parser, like [query-string][query-string-url], is likely al
 - [Options](#options)
   - [Fields](#fields)
   - [Keys](#keys)
-  - [Search Key](#search-key)
+  - [Search](#search)
 - [Examples](#examples)
 - [Notes](#notes)
 - [To Do](#to-do)
@@ -109,25 +109,27 @@ This `req.qproc` result can be used to execute a query that will find any docume
 
 ### Filter Operators
 
-| Operator | Description                                                  | MongoDB Operator |
-| -------- | ------------------------------------------------------------ | ---------------- |
-| eq       | Equal                                                        | `$eq`            |
-| ne       | Not equal                                                    | `$ne`            |
-| in       | In a list of values - Multiple values separated by a `,`     | `$in`            |
-| nin      | Not in a list of values - Multiple values separated by a `,` | `$nin`           |
-| gt       | Greater than                                                 | `$gt`            |
-| gte      | Greater than or equal to                                     | `$gte`           |
-| lt       | Less than                                                    | `$lt`            |
-| lte      | Less than or equal to                                        | `$lte`           |
+The filter operators need to be **before** the field name.
+
+| Operator | Description                                                  | Example     |
+| -------- | ------------------------------------------------------------ | ----------- |
+| eq       | Equal                                                        | `eq:value`  |
+| ne       | Not equal                                                    | `ne:value`  |
+| in       | In a list of values - Multiple values separated by a `,`     | `in:a,b,c`  |
+| nin      | Not in a list of values - Multiple values separated by a `,` | `nin:a,b,c` |
+| gt       | Greater than                                                 | `gt:value`  |
+| gte      | Greater than or equal to                                     | `gte:value` |
+| lt       | Less than                                                    | `lt:value`  |
+| lte      | Less than or equal to                                        | `lte:value` |
 
 ### Sort Order Operators
 
 The sort order operators need to be **before** the field name. The default sort order is **descending** when a sort order operator is not present.
 
-| Operator | Description | Example      |
-| -------- | ----------- | ------------ |
-| +        | Ascending   | `+eventDate` |
-| -        | Descending  | `-eventDate` |
+| Operator | Description | Example          |
+| -------- | ----------- | ---------------- |
+| asc      | Ascending   | `asc:eventDate`  |
+| desc     | Descending  | `desc:eventDate` |
 
 ---
 
@@ -187,7 +189,7 @@ When the above processor executes, `req.qproc` will look like this...
 
 Notice that the processor uses the keys for both searching the `req.query` input and the `req.qroc` results. So you don't have to keep track of which key is used in processing and which one is used in the result. If you set the `limitKey` to 'count', then you will access the value with `req.qproc.count` (not req.qproc.limit);
 
-### Search Key
+### Search
 
 When the `searchKey` is detected, no matter what other fields are present in `req.query`, the `req.qproc` result will look like this...
 
@@ -264,7 +266,7 @@ Let's assume that the following examples are going to be processed by the `myQpr
 **Request URI**
 
 ```
-/api/events?eventType=music&sort=+eventDate
+/api/events?eventType=music&sort=asc:eventDate
 ```
 
 **req.qproc Result**
