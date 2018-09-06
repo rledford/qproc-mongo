@@ -1,7 +1,7 @@
 {
   "name": "qproc-mongo",
   "version": "1.0.0",
-  "description": "Generates Express/Connect middleware that processes the query parameters in the request object. This middleware finds the user-defined field(s) and converts them to the desired type, finds any limit, skip, or sort paramters that are present, and makes the results available through the qproc request property.",
+  "description": "Generates query string processors (middleware) to use with Express/Connect. The processors translate query string parameters into usable MongoDB query parameters.",
   "main": "index.js",
   "scripts": {
     "test": "node test.js"
