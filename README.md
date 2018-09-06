@@ -1,6 +1,6 @@
 `qproc-mongo` generates query string processors (middleware) to use in your Express/Connect application routes. These processors translate query string parameters into usable MongoDB query parameters. After a qproc processor executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
 
-NOTE: A query string parser, like [query-string][query-string-url], is likely already being used in your app to set `req.query`. If `req.query` is missing or empty, then the processor will set `req.qproc` using [default values](#options).
+NOTE: A query string parser, like [query-string][query-string-url], is likely already being used in your app to set `req.query`. If `req.query` is missing or empty, then the processor will set `req.qproc` to [these values](#missing-or-empty-req.query).
 
 ### Table of Contents
 
@@ -11,7 +11,8 @@ NOTE: A query string parser, like [query-string][query-string-url], is likely al
   - [Fields](#fields)
   - [Keys](#keys)
   - [Search Key](#search-key)
-- [Misc](#misc)
+- [Examples](#examples)
+- [Notes](#notes)
 - [To Do](#to-do)
 
 ### Install
@@ -100,16 +101,16 @@ Now the `req.qproc` result can be used to execute a query that would be able to 
 
 #### Filter Operators
 
-| Operator | Description                                                  |
-| -------- | ------------------------------------------------------------ |
-| eq       | equal                                                        |
-| ne       | not equal                                                    |
-| in       | in a list of values - Multiple values separated by a `,`     |
-| nin      | not in a list of values - Multiple values separated by a `,` |
-| gt       | greater than                                                 |
-| gte      | greater than or equal to                                     |
-| lt       | less than                                                    |
-| lte      | less than or equal to                                        |
+| Operator | Description                                                  | MongoDB Operator |
+| -------- | ------------------------------------------------------------ | ---------------- |
+| eq       | Equal                                                        | `$eq`            |
+| ne       | Not equal                                                    | `$ne`            |
+| in       | In a list of values - Multiple values separated by a `,`     | `$in`            |
+| nin      | Not in a list of values - Multiple values separated by a `,` | `$nin`           |
+| gt       | Greater than                                                 | `$gt`            |
+| gte      | Greater than or equal to                                     | `$gte`           |
+| lt       | Less than                                                    | `$lt`            |
+| lte      | Less than or equal to                                        | `$lte`           |
 
 #### Sort Order Operators
 
@@ -197,13 +198,152 @@ NOTE: `limit`, `skip`, and `sort` will have whatever values are found in the `re
 
 There are some assumptions being made here about the underlying collection that will be queried. The most important thing to note is that this filter will only work on collections that have a **text index**. Usually, when text searches are performed on a collection, a **text index** exists. If you want to search multiple fields for matches on text without using the MongoDB text search method, then you can check if `req.qproc.filter.$text` exists and do whatever you want with the `$search` value.
 
-### Misc
+### Examples
+
+Let's assume that the following examples are going to be processed by the `myQprocProcessor` we used in the above [Usage](#usage) section.
+
+#### Basic Filter
+
+**Request URI**
+
+```
+/api/events?eventType=music
+```
+
+**req.qproc Result**
+
+```js
+{
+  filter: {
+    eventType: {$eq: 'music'}
+  },
+  /* omitted */
+}
+```
+
+#### Filter with Ranges
+
+**Request URI**
+
+```
+/api/events?eventDate=gte:2018-01-01,lt:2019-01-01&ticketCost=gt:30.0,lt:100.0
+```
+
+**req.qproc Result**
+
+```js
+{
+  filter: {
+    eventDate: {
+      $gte: '2018-01-01T00:00:00.000Z',
+      $lt: '2019-01-01T00:00:00.000Z'
+    },
+    ticketCost: {
+      $gt: 30.0,
+      $lt: 100.0
+    }
+  }
+  /* omitted */
+}
+```
+
+#### Filter and Sort
+
+**Request URI**
+
+```
+/api/events?eventType=music&sort=+eventDate
+```
+
+**req.qproc Result**
+
+```js
+{
+  filter: {
+    eventType: {$eq: 'music'}
+  },
+  sort: {
+    eventDate: 1
+  },
+  /* omitted */
+}
+```
+
+#### Using in: to Filter with a List of Values
+
+**Request URI**
+
+```
+/api/events?eventType=in:music,sports
+```
+
+NOTE: The values that follow `in:` are comma-delimited without spaces between them
+
+**req.qproc Result**
+
+```js
+{
+  filter: {
+    eventType: {
+      $in: ['music', 'sports'];
+    }
+  }
+  /* omitted */
+}
+```
+
+#### Using nin: to Filter with a List of Values
+
+**Request URI**
+
+```
+/api/events?eventType=nin:music,sports
+```
+
+NOTE: The values that follow `nin:` are comma-delimited without spaces between them
+
+**req.qproc Result**
+
+```js
+{
+  filter: {
+    eventType: {
+      $nin: ['music', 'sports'];
+    }
+  }
+  /* omitted */
+}
+```
+
+#### Using Limit and Skip for Pagination
+
+**Request URI**
+
+```
+/api/events?limit=100&skip=200
+```
+
+NOTE: Any combination of filters and sorts can be used with limit and skip.
+
+**req.qproc Result**
+
+```js
+{
+  filter: {}
+  },
+  limit: 100,
+  skip: 200
+  /* omitted */
+}
+```
+
+### Notes
 
 #### createProcessor(options)
 
 When `createProcessor()` is called without providing any `options`, a warning message will be shown in the console. A processor that is using the default options will always have the `req.qproc.filter` value set to `{}`, so be careful.
 
-#### Missing req.query
+#### Missing or Empty req.query
 
 When a processor executes on a request that has a missing or empty `req.query` input, the `req.qproc` result will look like this...
 
@@ -220,8 +360,7 @@ These are valid MongoDB query parameters but probably shouldn't be used since it
 
 ### To Do
 
-- Explain sorting (single and multi-field) and provide an example
-- Explain how to use comma seperated values for fields using $in, $nin, and other operators
 - Provide a working example of an Express app that uses qproc-mongo
+- Add support for $or
 
 [query-string-url]: https://www.npmjs.com/package/query-string
