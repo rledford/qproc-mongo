@@ -181,11 +181,11 @@ When the above processor executes, `req.qproc` will look like this...
   filter: {/* based on field definitions */},
   count: 0,
   offset: 0,
-  oerderBy: {}
+  orderBy: {}
 }
 ```
 
-Notice that the processor uses the keys for both searching the `req.query` input and the `req.qroc` results. So you don't have to keep track of which key is used in processing and which one is used in the result. If you set the `limitKey` to 'count', then you will access the value with `req.qproc.count` (not req.qproc.limit);
+Notice that the processor uses the same keys, provided in the options, for the `req.qroc` results. Now you don't have to keep track of which key is used in processing and which one is used in the result.
 
 ### Search
 
