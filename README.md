@@ -107,7 +107,7 @@ This `req.qproc` result can be used to execute a query that will find any docume
 
 ### Filter Operators
 
-The filter operators need to be **before** the field name.
+The filter operators need to be **before** the value(s) they will operate on.
 
 | Operator | Description                                                  | Example     |
 | -------- | ------------------------------------------------------------ | ----------- |
@@ -122,7 +122,7 @@ The filter operators need to be **before** the field name.
 
 ### Sort Order Operators
 
-The sort order operators need to be **before** the field name. The default sort order is **descending** when a sort order operator is not present.
+The sort order operators need to be **before** the field name they will operate on. The default sort order is **descending** when a sort order operator is not present.
 
 | Operator | Description | Example          |
 | -------- | ----------- | ---------------- |
@@ -143,15 +143,17 @@ The sort order operators need to be **before** the field name. The default sort 
 
 ### Fields
 
-Fields should be set using a field name and its type. The available types are `String`, `Date`, `Int`, and `Float`. The types should be set using the `qproc-mongo` module like this.
+Field definitions tell a qproc-mongo processor what fields to look for in `req.query` and what type they should be when they are converted to MongoDB query parameters. The available types are `String`, `Date`, `Int`, and `Float`. The types should be set using the `qproc-mongo` module like this.
 
 ```js
 const qproc = require('qproc-mongo');
 const options = {
-  eventType: qproc.String,
-  eventDate: qproc.Date,
-  ticketCount: qproc.Int,
-  ticketCost: qproc.Float
+  fields: {
+    eventType: qproc.String,
+    eventDate: qproc.Date,
+    ticketCount: qproc.Int,
+    ticketCost: qproc.Float
+  }
 };
 
 const processor = qproc.createProcessor(options);
