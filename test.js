@@ -13,35 +13,9 @@ let options = {
     eventDate: qproc.Date,
     ticketCount: qproc.Int,
     ticketCost: qproc.Float
-  },
-  limitKey: 'limit',
-  skipKey: 'skip',
-  sortKey: 'sort',
-  searchKey: 'search'
+  }
 };
 
-separator();
-console.log('TEST: empty/missing options');
-console.log(
-  'EXPECTED RESULT: should output warnings for missing fields and keys'
-);
-qproc.createProcessor({});
-
-separator();
-console.log('TEST: populated fields with missing keys');
-console.log('EXPECTED RESULT: should output warnings for missing keys only');
-qproc.createProcessor({
-  fields: {
-    eventName: qproc.String,
-    eventDate: qproc.Date,
-    ticketCount: qproc.Int,
-    ticketCost: qproc.Float
-  }
-});
-
-separator();
-console.log('TEST: populated fields and keys');
-console.log('EXPECTED RESULT: should not output any warnings');
 const test = qproc.createProcessor(options);
 
 const req = {
