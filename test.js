@@ -9,6 +9,7 @@ function separator() {
 const qproc = require('./index');
 let options = {
   fields: {
+    vendorName: qproc.String,
     eventName: qproc.String,
     eventDate: qproc.Date,
     ticketCount: qproc.Int,
@@ -20,6 +21,7 @@ const test = qproc.createProcessor(options);
 
 const req = {
   query: {
+    vendorName: 'regex:^abc,ig',
     eventType: 'in:music,sports',
     eventDate: 'gt:2018-01-01,lt:2019-01-01',
     ticketCount: 'lt:1000',
