@@ -109,16 +109,17 @@ This `req.qproc` result can be used to execute a query that will find any docume
 
 The filter operators need to be **before** the value(s) they will operate on.
 
-| Operator | Description                                                  | Example     |
-| -------- | ------------------------------------------------------------ | ----------- |
-| eq       | Equal                                                        | `eq:value`  |
-| ne       | Not equal                                                    | `ne:value`  |
-| in       | In a list of values - Multiple values separated by a `,`     | `in:a,b,c`  |
-| nin      | Not in a list of values - Multiple values separated by a `,` | `nin:a,b,c` |
-| gt       | Greater than                                                 | `gt:value`  |
-| gte      | Greater than or equal to                                     | `gte:value` |
-| lt       | Less than                                                    | `lt:value`  |
-| lte      | Less than or equal to                                        | `lte:value` |
+| Operator | Description                                                  | Example        |
+| -------- | ------------------------------------------------------------ | -------------- |
+| eq       | Equal                                                        | `eq:value`     |
+| ne       | Not equal                                                    | `ne:value`     |
+| in       | In a list of values - Multiple values separated by a `,`     | `in:a,b,c`     |
+| nin      | Not in a list of values - Multiple values separated by a `,` | `nin:a,b,c`    |
+| gt       | Greater than                                                 | `gt:value`     |
+| gte      | Greater than or equal to                                     | `gte:value`    |
+| lt       | Less than                                                    | `lt:value`     |
+| lte      | Less than or equal to                                        | `lte:value`    |
+| regex    | Regular expression                                           | `regex:^abc,i` |
 
 ### Sort Order Operators
 
@@ -191,14 +192,12 @@ Notice that the processor uses the same keys, provided in the options, for the `
 
 ### Search
 
-When the `searchKey` is detected, no matter what other fields are present in `req.query`, the `req.qproc` result will look like this...
+When the `searchKey` is detected, the `req.qproc` filter will contain an `$or` list where each element is a `field` mapped to the provided a regular expression. Only `string` fields are allowed to have a regex operator used on them.
 
 ```js
 {
   filter: {
-    $text: {
-      $search: 'whatever the value is in the query string';
-    }
+    $or: [{field: /^search-text/i}, {field: /^search-text/i}]
   },
   limit: 0,
   skip: 0,
@@ -207,8 +206,6 @@ When the `searchKey` is detected, no matter what other fields are present in `re
 ```
 
 NOTE: `limit`, `skip`, and `sort` will have whatever values are found in the `req.query` input.
-
-There are some assumptions being made here about the underlying collection that will be queried. The most important thing to note is that this filter will only work on collections that have a **text index**. Usually, when text searches are performed on a collection, a **text index** should exist. If you want to search multiple fields for matches on text without using the MongoDB text search method, then you can check if `req.qproc.filter.$text` exists and do whatever you want with the `$search` value.
 
 ---
 
@@ -380,4 +377,3 @@ These are valid MongoDB query parameters but probably shouldn't be used since it
 - Provide a working example of an Express app that uses qproc-mongo
 - Add an alternate searchKey that generates a filter for collections that do not use text indexes
 - Add support for $or
-- Add support for $regex
