@@ -197,7 +197,7 @@ When the `searchKey` is detected, the `req.qproc` filter will contain an `$or` l
 ```js
 {
   filter: {
-    $or: [{field: /^search-text/i}, {field: /^search-text/i}]
+    $or: [{field: /search-text/i}, {field: /search-text/i}]
   },
   limit: 0,
   skip: 0,
