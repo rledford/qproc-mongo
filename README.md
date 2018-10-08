@@ -121,6 +121,21 @@ The filter operators need to be **before** the value(s) they will operate on.
 | lte      | Less than or equal to                                        | `lte:value`    |
 | regex    | Regular expression                                           | `regex:^abc,i` |
 
+When using the `regex` operator, separate the match criteria from the flags with a `,` comma. Flags should not be separated by anything. Do not surround the expression with `/` forward slashes. The `regex` operator should only be used for fields with `String` values. For example...
+
+```
+/api/events?description=regex:soen,ig
+```
+
+Using the above request query parameters, the `regex` will be translated to a JavaScript `RegExp`.
+
+```js
+const match = 'soen';
+const flags = 'ig';
+
+const re = new RegExp(match, flags);
+```
+
 ### Sort Order Operators
 
 The sort order operators need to be **before** the field name they will operate on. The default sort order is **descending** when a sort order operator is not present.
@@ -144,12 +159,13 @@ The sort order operators need to be **before** the field name they will operate 
 
 ### Fields
 
-Field definitions tell a qproc-mongo processor what fields to look for in `req.query` and what type they should be when they are converted to MongoDB query parameters. The available types are `String`, `Date`, `Int`, and `Float`. The types should be set using the `qproc-mongo` module like this.
+Field definitions tell a qproc-mongo processor what fields to look for in `req.query` and what type they should be when they are converted to MongoDB query parameters. The available types are `String`, `Date`, `Int`, `Float`, and `ObjectId`. The types should be set using the `qproc-mongo` module like this.
 
 ```js
 const qproc = require('qproc-mongo');
 const options = {
   fields: {
+    _id: qproc.ObjectId,
     eventType: qproc.String,
     eventDate: qproc.Date,
     ticketCount: qproc.Int,
@@ -159,6 +175,14 @@ const options = {
 
 const processor = qproc.createProcessor(options);
 ```
+
+Tip: The `ObjectId` type supports `null` as a value. This is helpful when your documents use references to other documents. Example.
+
+```
+/api/events?location=null
+```
+
+If the event documents have a property named `location` that is an `ObjectId` reference to a record in another collection, then you could find any event that doesn't have a location set by using the above query parameters.
 
 ### Keys
 
@@ -192,7 +216,7 @@ Notice that the processor uses the same keys, provided in the options, for the `
 
 ### Search
 
-When the `searchKey` is detected, the `req.qproc` filter will contain an `$or` list where each element is a `field` mapped to the provided a regular expression. Only `string` fields are allowed to have a regex operator used on them.
+When the `searchKey` is detected, the `req.qproc` filter will contain an `$or` list where each element is a `field` mapped to the provided a regular expression. Only `String` fields are allowed to have a regex operator used on them.
 
 ```js
 {
