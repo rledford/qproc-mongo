@@ -2,6 +2,8 @@
 
 `qproc-mongo` generates query string processors (middleware) to use in your Express/Connect application routes. These processors translate query string parameters, in `req.query`, into usable MongoDB query parameters. After a qproc processor executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
 
+NOTICE: As of version 1.3.0, `regex` values should follow the JavaScript regular expression pattern (i.e. `/abc/gi`). Using the `regex` operator in the request's query string should look like this `regex:/abc/gi`. Previous versions of `qproc-mongo` simply used a comma to serarate the `match` criteria from the `flags`, but this was not the right approach.
+
 ## Table of Contents
 
 - [Install](#install)
@@ -109,32 +111,19 @@ This `req.qproc` result can be used to execute a query that will find any docume
 
 The filter operators need to be **before** the value(s) they will operate on.
 
-| Operator | Description                                                  | Example        |
-| -------- | ------------------------------------------------------------ | -------------- |
-| eq       | Equal                                                        | `eq:value`     |
-| ne       | Not equal                                                    | `ne:value`     |
-| in       | In a list of values - Multiple values separated by a `,`     | `in:a,b,c`     |
-| nin      | Not in a list of values - Multiple values separated by a `,` | `nin:a,b,c`    |
-| gt       | Greater than                                                 | `gt:value`     |
-| gte      | Greater than or equal to                                     | `gte:value`    |
-| lt       | Less than                                                    | `lt:value`     |
-| lte      | Less than or equal to                                        | `lte:value`    |
-| regex    | Regular expression                                           | `regex:^abc,i` |
+| Operator | Description                                                  | Example         |
+| -------- | ------------------------------------------------------------ | --------------- |
+| eq       | Equal                                                        | `eq:value`      |
+| ne       | Not equal                                                    | `ne:value`      |
+| in       | In a list of values - Multiple values separated by a `,`     | `in:a,b,c`      |
+| nin      | Not in a list of values - Multiple values separated by a `,` | `nin:a,b,c`     |
+| gt       | Greater than                                                 | `gt:value`      |
+| gte      | Greater than or equal to                                     | `gte:value`     |
+| lt       | Less than                                                    | `lt:value`      |
+| lte      | Less than or equal to                                        | `lte:value`     |
+| regex    | Regular expression                                           | `regex:/^abc/i` |
 
-When using the `regex` operator, separate the match criteria from the flags with a `,` comma. Flags should not be separated by anything. Do not surround the expression with `/` forward slashes. The `regex` operator should only be used for fields with `String` values. For example...
-
-```
-/api/events?description=regex:soen,ig
-```
-
-Using the above request query parameters, the `regex` will be translated to a JavaScript `RegExp`.
-
-```js
-const match = 'soen';
-const flags = 'ig';
-
-const re = new RegExp(match, flags);
-```
+NOTE: Invalid `regex` values are not included in the `filter`. Not providing a value after the `regex` operator will result in `/(:?)/` being used which will match anything. Also, if the field type, that `regex` is operating on, is not `qproc.String`, then it will not be included in the `filter`.
 
 ### Sort Order Operators
 
@@ -367,6 +356,25 @@ NOTE: Any combination of field filters and sorts can be used with limit and skip
   filter: {},
   limit: 100,
   skip: 200,
+  /* omitted */
+}
+```
+
+### Using regex: to Search String Fields
+
+**Request URI**
+
+```
+/api/events?description=regex:/soen/gi
+```
+
+**req.qproc Result**
+
+```js
+{
+  filter: {
+    description: { $regex: /soen/gi}
+  },
   /* omitted */
 }
 ```
