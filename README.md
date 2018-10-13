@@ -127,7 +127,7 @@ NOTE: Invalid `regex` values are not included in the `filter`. Not providing a v
 
 ### Sort Order Operators
 
-The sort order operators need to be **before** the field name they will operate on. The default sort order is **descending** when a sort order operator is not present.
+The sort order operators need to be **before** the field name they will operate on. The default sort order is **ascending** when a sort order operator is not present.
 
 | Operator | Description | Example          |
 | -------- | ----------- | ---------------- |
