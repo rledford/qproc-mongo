@@ -9,6 +9,7 @@ function separator() {
 const qproc = require('./index');
 let options = {
   fields: {
+    _id: qproc.ObjectId,
     eventType: qproc.String,
     eventName: qproc.String,
     eventDate: qproc.Date,
