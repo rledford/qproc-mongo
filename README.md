@@ -407,5 +407,3 @@ These are valid MongoDB query parameters but probably shouldn't be used since it
 ## To Do
 
 - Provide a working example of an Express app that uses qproc-mongo
-- Add an alternate searchKey that generates a filter for collections that do not use text indexes
-- Add support for $or
