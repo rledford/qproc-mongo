@@ -2,7 +2,9 @@
 
 `qproc-mongo` generates query string processors (middleware) to use in your Express/Connect application routes. These processors translate query string parameters, in `req.query`, into usable MongoDB query parameters. After a qproc processor executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
 
-NOTICE: As of version 1.3.0, `regex` values should follow the JavaScript regular expression pattern (i.e. `/abc/gi`). Using the `regex` operator in the request's query string should look like this `regex:/abc/gi`. Previous versions of `qproc-mongo` simply used a comma to serarate the `match` criteria from the `flags`, but this was not the right approach.
+v1.4.0 - Added field alias support. Check the [Alias](#alias) section for details.
+
+v1.3.0 - Added `regex` operator support
 
 ## Table of Contents
 
@@ -11,6 +13,7 @@ NOTICE: As of version 1.3.0, `regex` values should follow the JavaScript regular
 - [Supported Operators](#supported-operators)
 - [Options](#options)
   - [Fields](#fields)
+  - [Alias](#alias)
   - [Keys](#keys)
   - [Search](#search)
 - [Examples](#examples)
@@ -41,10 +44,14 @@ const qproc = require('qproc-mongo');
 // create processor middleware
 const myQprocProcessor = qproc.createProcessor({
   fields: {
+    _id: qproc.ObjectId,
     eventType: qproc.String,
     eventDate: qproc.Date,
     ticketCount: qproc.Int,
     ticketCost: qproc.Float
+  },
+  alias: {
+    id: '_id'
   }
 });
 
@@ -138,13 +145,14 @@ The sort order operators need to be **before** the field name they will operate 
 
 ## Options
 
-| Option    | Default  | Description                                                                       |
-| --------- | -------- | --------------------------------------------------------------------------------- |
-| fields    | `{}`     | key:value pairs that will identify query filter fields and their associated types |
-| limitKey  | `limit`  | used to identify the limit parameter                                              |
-| skipKey   | `skip`   | used to identify the skip parameter                                               |
-| sortKey   | `sort`   | used to identify the sort parameter                                               |
-| searchKey | `search` | used to identify the search parameter                                             |
+| Option    | Default  | Description                                                                                                    |
+| --------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| fields    | `{}`     | key:value pairs that will identify query filter fields and their associated types                              |
+| alias     | `{}`     | key:value pairs where `key` is the aliased field name and `value` is what field in `fields` it is an alias for |
+| limitKey  | `limit`  | used to identify the limit parameter                                                                           |
+| skipKey   | `skip`   | used to identify the skip parameter                                                                            |
+| sortKey   | `sort`   | used to identify the sort parameter                                                                            |
+| searchKey | `search` | used to identify the search parameter                                                                          |
 
 ### Fields
 
@@ -172,6 +180,28 @@ Tip: The `ObjectId` type supports `null` as a value. This is helpful when your d
 ```
 
 If the event documents have a property named `location` that is an `ObjectId` reference to a record in another collection, then you could find any event that doesn't have a location set by using the above query parameters.
+
+### Alias
+
+Alias definitions tell a qproc-mongo processor what fields may be present in `req.query`, that are not defined in `fields`, but should be aliased to another field definition. When a qproc-mongo processor detects an aliased field, it will convert it to the field name specified in the alias definition. This is especially useful when other developers or frameworks use `id` instead of `_id` to refer to database record IDs, or to hide the actual database record field names.
+
+```js
+const qproc = require('qproc-mongo');
+const options = {
+  fields: {
+    _id: qproc.ObjectId
+  },
+  alias: {
+    id: '_id'
+  }
+};
+
+const processor = qproc.createProcessor(options);
+```
+
+Anytime the above processor detects `id` in `req.query`, it will alias it to `_id` so that the `filter` result will include `_id`.
+
+NOTE: If an aliased field is detected but the field it is an alias for is already in `req.query`, the aliased query parameter will not be used.
 
 ### Keys
 
@@ -205,7 +235,7 @@ Notice that the processor uses the same keys, provided in the options, for the `
 
 ### Search
 
-When the `searchKey` is detected, the `req.qproc` filter will contain an `$or` list where each element is a `field` mapped to the provided a regular expression. Only `String` fields are allowed to have a regex operator used on them.
+When the `searchKey` is detected, the `req.qproc` filter will contain an `$or` list where each element is a `field` mapped to the provided regular expression. Only `String` fields are allowed to have a regex operator used on them.
 
 ```js
 {
@@ -240,6 +270,25 @@ Let's assume that the following examples are going to be processed by the `myQpr
 {
   filter: {
     eventType: {$eq: 'music'}
+  },
+  /* omitted */
+}
+```
+
+### Basic Filter with Aliased Field
+
+**Request URI**
+
+```
+/api/events?id=event_id
+```
+
+**req.qproc Result**
+
+```js
+{
+  filter: {
+    _id: {$eq: 'event_id'}
   },
   /* omitted */
 }
@@ -365,7 +414,7 @@ NOTE: Any combination of field filters and sorts can be used with limit and skip
 **Request URI**
 
 ```
-/api/events?description=regex:/soen/gi
+/api/events?description=regex:/opeth/gi
 ```
 
 **req.qproc Result**
@@ -373,7 +422,7 @@ NOTE: Any combination of field filters and sorts can be used with limit and skip
 ```js
 {
   filter: {
-    description: { $regex: /soen/gi}
+    description: { $regex: /opeth/gi}
   },
   /* omitted */
 }
@@ -406,4 +455,4 @@ These are valid MongoDB query parameters but probably shouldn't be used since it
 
 ## To Do
 
-- Provide a working example of an Express app that uses qproc-mongo
+- All caught up.

@@ -16,6 +16,9 @@ let options = {
     description: qproc.String,
     ticketCount: qproc.Int,
     ticketCost: qproc.Float
+  },
+  alias: {
+    id: '_id'
   }
 };
 
@@ -23,6 +26,7 @@ const test = qproc.createProcessor(options);
 
 const req = {
   query: {
+    id: 'alias for _id',
     eventType: 'in:music,sports',
     eventDate: 'gt:2018-01-01,lt:2019-01-01',
     description: 'regex:/soen/gi',
