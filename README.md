@@ -2,7 +2,7 @@
 
 `qproc-mongo` generates query string processors as well as middleware to use in your Express/Connect application routes. These processors translate query objects into usable MongoDB query parameters. After a qproc middleware executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
 
-v2.0.0 - U
+v2.0.0 - See the [Upgrading](#upgrading) section for upgrading from v1.x to v2.x. The only major change is that `createProcessor` now returns an object with a single `exec` method to process query objects. `createMiddleware` returns the middleware that used to be returned by `createProcessor` - apologies for any inconvenience.
 
 v1.4.0 - Added field alias support. Check the [Alias](#alias) section for details.
 
@@ -11,7 +11,7 @@ v1.3.0 - Added `regex` operator support
 ## Table of Contents
 
 - [Install](#install)
-- [Upgrade](#upgrade)
+- [Upgrading](#upgrading)
 - [Usage](#usage)
 - [Supported Operators](#supported-operators)
 - [Options](#options)
@@ -33,7 +33,7 @@ npm install qproc-mongo
 
 ---
 
-## Upgrade
+## Upgrading
 
 ### v1.x to v2.x
 
@@ -43,7 +43,7 @@ If you're upgrading from v1.x to v2.x the only breaking change is that `createPr
 
 ### Middleware
 
-You can pass an error handler function to the `createMiddleware` method. The error handler function must **either** send a response **or** call `next`. If an error handler is not passed to the `createMiddleware` method, then `next(err)` is called by default. Remember to make sure your application does not report stack traces in `production` or you may leak information about your application when `next(err)` is called. This is the primary reason for adding support for a custom error handler.
+As of v2.x, you can pass an error handler function to the `createMiddleware` method. The error handler function must **either** send a response **or** call `next`. If an error handler is not passed to the `createMiddleware` method, then `next(err)` is called by default. Remember to make sure your application does not report stack traces in `production` or you may leak information about your application when `next(err)` is called. This is the primary reason for adding support for a custom error handler.
 
 | Argument | Type     | Description                          |
 | -------- | -------- | ------------------------------------ |
