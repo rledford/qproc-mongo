@@ -1,6 +1,8 @@
 # qproc-mongo
 
-`qproc-mongo` generates query string processors (middleware) to use in your Express/Connect application routes. These processors translate query string parameters, in `req.query`, into usable MongoDB query parameters. After a qproc processor executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
+`qproc-mongo` generates query string processors as well as middleware to use in your Express/Connect application routes. These processors translate query objects into usable MongoDB query parameters. After a qproc middleware executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
+
+v2.0.0 - U
 
 v1.4.0 - Added field alias support. Check the [Alias](#alias) section for details.
 
@@ -9,6 +11,7 @@ v1.3.0 - Added `regex` operator support
 ## Table of Contents
 
 - [Install](#install)
+- [Upgrade](#upgrade)
 - [Usage](#usage)
 - [Supported Operators](#supported-operators)
 - [Options](#options)
@@ -30,7 +33,24 @@ npm install qproc-mongo
 
 ---
 
+## Upgrade
+
+### v1.x to v2.x
+
+If you're upgrading from v1.x to v2.x the only breaking change is that `createProcessor` no longer returns a middleware, but instead returns an object that includes a single `exec` method. The only thing you will have to do after upgrading to v2.x is change your `createProcessor` calls to `createMiddleware`. The new `createMiddleware` method supports an optional error handler function as it's second argument.
+
 ## Usage
+
+### Middleware
+
+You can pass an error handler function to the `createMiddleware` method. The error handler function must **either** send a response **or** call `next`. If an error handler is not passed to the `createMiddleware` method, then `next(err)` is called by default. Remember to make sure your application does not report stack traces in `production` or you may leak information about your application when `next(err)` is called. This is the primary reason for adding support for a custom error handler.
+
+| Argument | Type     | Description                          |
+| -------- | -------- | ------------------------------------ |
+| err      | Object   | a JavaScript `Error` object          |
+| req      | Object   | an Express/Connect request object    |
+| res      | Object   | an Express/Connect response object   |
+| next     | Function | an Express/Connect callback function |
 
 ```js
 /*
@@ -41,21 +61,34 @@ npm install qproc-mongo
 // require module
 const qproc = require('qproc-mongo');
 
-// create processor middleware
-const myQprocProcessor = qproc.createProcessor({
-  fields: {
-    _id: qproc.ObjectId,
-    eventType: qproc.String,
-    eventDate: qproc.Date,
-    ticketCount: qproc.Int,
-    ticketCost: qproc.Float
-  },
-  alias: {
-    id: '_id'
-  }
-});
+// custom error handler
+const customErrorHandler = (err, req, res, next) => {
+  res.status(400).json({
+    error: {
+      status: 400,
+      message: err.message
+    }
+  });
+};
 
-app.use('/api/events', myQprocProcessor, (req, res) => {
+// create middleware
+const middleware = qproc.createMiddleware(
+  {
+    fields: {
+      _id: qproc.ObjectId,
+      eventType: qproc.String,
+      eventDate: qproc.Date,
+      ticketCount: qproc.Int,
+      ticketCost: qproc.Float
+    },
+    alias: {
+      id: '_id'
+    }
+  },
+  customErrorHandler
+);
+
+app.use('/api/events', middleware, (req, res) => {
   const { filter, limit, skip, sort } = req.qproc;
 
   db.collection('events')
@@ -73,13 +106,13 @@ app.use('/api/events', myQprocProcessor, (req, res) => {
 });
 ```
 
-For this example, the request URI looks like this...
+For this middleware example, the request URI looks like this...
 
 ```
 http://localhost:3000/api/events?eventType=in:music,sports&eventDate=gt:2018-01-01,lt:2019-01-01&ticketCount=lt:1000&ticketCost=gte:299.99
 ```
 
-The `req.query` then looks like this...
+The for both examples, `query` object looks like this...
 
 ```js
 {
@@ -90,7 +123,7 @@ The `req.query` then looks like this...
 }
 ```
 
-After `myQprocProcessor` executes, the `req.qproc` result looks like this...
+After the `middleware` executes, `req.qproc` looks like this...
 
 ```js
 {
@@ -108,7 +141,60 @@ After `myQprocProcessor` executes, the `req.qproc` result looks like this...
 }
 ```
 
-This `req.qproc` result can be used to execute a query that will find any document that has an `eventType` of `music` or `sports`, is within the provided `eventDate` constraints, has a `ticketCount` that is less than 1000, and has a `ticketCost` that is greater than or equal to 299.99.
+The result from the middleware can be used to execute a query that will find any document that has an `eventType` of `music` or `sports`, is within the provided `eventDate` constraints, has a `ticketCount` that is less than 1000, and has a `ticketCost` that is greater than or equal to 299.99.
+
+---
+
+### Processor
+
+The `createProcessor` method can be used to create a query object processor that is not wrapped in a middleware. The `createMiddleware` method uses `createProcessor` internally and passes `req.query` to the processor. If you want to include a `qproc` processor somewhere else in your application, this is how you can do it.
+
+```js
+const qproc = require('qproc-mongo');
+
+const myProcessor = qproc.createProcessor(
+  fields: {
+    _id: qproc.ObjectId,
+    eventType: qproc.String,
+    eventDate: qproc.Date,
+    ticketCount: qproc.Int,
+    ticketCost: qproc.Float
+  },
+  alias: {
+    id: '_id'
+  }
+);
+
+const exampleQueryObject = {
+  eventType: 'in:music,sports',
+  eventDate: 'gt:2018-01-01,lt:2019-01-01',
+  ticketCount: 'lt:1000',
+  ticketCost: 'gte:299.99'
+}
+
+try {
+  const result = myProcessor.exec(exampleQueryObject);
+  console.log(result);
+  /*
+  {
+    filter: {
+      eventType: { '$in': ['music', 'sports'] },
+      eventDate:
+      { '$gt': '2018-01-01T00:00:00.000Z',
+        '$lt': '2019-01-01T00:00:00.000Z' },
+      ticketCount: { '$lt': 1000 },
+      ticketCost: { '$gte': 299.99 }
+    },
+    limit: 0,
+    skip: 0
+    sort: {},
+  }
+  */
+} catch(err) {
+  /* handle error */
+  console.log(err.message);
+}
+```
 
 ---
 
@@ -422,7 +508,7 @@ NOTE: Any combination of field filters and sorts can be used with limit and skip
 ```js
 {
   filter: {
-    description: { $regex: /opeth/gi}
+    description: { $regex: /^mastodon/gi}
   },
   /* omitted */
 }
