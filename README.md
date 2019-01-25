@@ -2,17 +2,12 @@
 
 `qproc-mongo` generates query string processors as well as middleware to use in your Express/Connect application routes. These processors translate query objects into usable MongoDB query parameters. After a qproc middleware executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
 
-v2.0.0 - See the [Upgrading](#upgrading) section for upgrading from v1.x to v2.x. The only major change is that `createProcessor` now returns an object with a single `exec` method to process query objects. `createMiddleware` returns the middleware that used to be returned by `createProcessor` - apologies for any inconvenience.
-
-v1.4.0 - Added field alias support. Check the [Alias](#alias) section for details.
-
-v1.3.0 - Added `regex` operator support
-
 ## Table of Contents
 
 - [Install](#install)
-- [Upgrading](#upgrading)
+- [Upgrade](#upgrade)
 - [Usage](#usage)
+- [Middleware Error Handling](#middleware-error-handling)
 - [Supported Operators](#supported-operators)
 - [Options](#options)
   - [Fields](#fields)
@@ -33,24 +28,15 @@ npm install qproc-mongo
 
 ---
 
-## Upgrading
+## Upgrade
 
 ### v1.x to v2.x
 
-If you're upgrading from v1.x to v2.x the only breaking change is that `createProcessor` no longer returns a middleware, but instead returns an object that includes a single `exec` method. The only thing you will have to do after upgrading to v2.x is change your `createProcessor` calls to `createMiddleware`. The new `createMiddleware` method supports an optional error handler function as it's second argument.
+If you're upgrading from v1.x to v2.x the only breaking change is that `createProcessor` no longer returns a middleware, but instead returns an object that includes a single `exec` method. The only thing you will have to do to upgrade to v2.x is change your `createProcessor` calls to `createMiddleware`.
 
 ## Usage
 
-### Middleware
-
-As of v2.x, you can pass an error handler function to the `createMiddleware` method. The error handler function must **either** send a response **or** call `next`. If an error handler is not passed to the `createMiddleware` method, then `next(err)` is called by default. Remember to make sure your application does not report stack traces in `production` or you may leak information about your application when `next(err)` is called. This is the primary reason for adding support for a custom error handler.
-
-| Argument | Type     | Description                          |
-| -------- | -------- | ------------------------------------ |
-| err      | Object   | a JavaScript `Error` object          |
-| req      | Object   | an Express/Connect request object    |
-| res      | Object   | an Express/Connect response object   |
-| next     | Function | an Express/Connect callback function |
+### Create Middleware
 
 ```js
 /*
@@ -62,7 +48,7 @@ As of v2.x, you can pass an error handler function to the `createMiddleware` met
 const qproc = require('qproc-mongo');
 
 // custom error handler
-const customErrorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, next) => {
   res.status(400).json({
     error: {
       status: 400,
@@ -71,24 +57,24 @@ const customErrorHandler = (err, req, res, next) => {
   });
 };
 
-// create middleware
-const middleware = qproc.createMiddleware(
-  {
-    fields: {
-      _id: qproc.ObjectId,
-      eventType: qproc.String,
-      eventDate: qproc.Date,
-      ticketCount: qproc.Int,
-      ticketCost: qproc.Float
-    },
-    alias: {
-      id: '_id'
-    }
+// options
+const options = {
+  fields: {
+    _id: qproc.ObjectId,
+    eventType: qproc.String,
+    eventDate: qproc.Date,
+    ticketCount: qproc.Int,
+    ticketCost: qproc.Float
   },
-  customErrorHandler
-);
+  alias: {
+    id: '_id'
+  }
+};
 
-app.use('/api/events', middleware, (req, res) => {
+// create middleware
+const myQprocMiddleware = qproc.createMiddleware(options, errorHandler);
+
+app.use('/api/events', myQprocMiddleware, (req, res) => {
   const { filter, limit, skip, sort } = req.qproc;
 
   db.collection('events')
@@ -112,7 +98,7 @@ For this middleware example, the request URI looks like this...
 http://localhost:3000/api/events?eventType=in:music,sports&eventDate=gt:2018-01-01,lt:2019-01-01&ticketCount=lt:1000&ticketCost=gte:299.99
 ```
 
-The for both examples, `query` object looks like this...
+The `req.query` object then looks like this...
 
 ```js
 {
@@ -123,7 +109,7 @@ The for both examples, `query` object looks like this...
 }
 ```
 
-After the `middleware` executes, `req.qproc` looks like this...
+After `myQprocMiddleware` executes, `req.qproc` looks like this...
 
 ```js
 {
@@ -145,14 +131,14 @@ The result from the middleware can be used to execute a query that will find any
 
 ---
 
-### Processor
+### Create Processor
 
-The `createProcessor` method can be used to create a query object processor that is not wrapped in a middleware. The `createMiddleware` method uses `createProcessor` internally and passes `req.query` to the processor. If you want to include a `qproc` processor somewhere else in your application, this is how you can do it.
+The processor returned by `createProcessor` can be used on query objects directly if you want to include it somewhere else or inside your own middleware.
 
 ```js
 const qproc = require('qproc-mongo');
 
-const myProcessor = qproc.createProcessor(
+const options = {
   fields: {
     _id: qproc.ObjectId,
     eventType: qproc.String,
@@ -163,14 +149,16 @@ const myProcessor = qproc.createProcessor(
   alias: {
     id: '_id'
   }
-);
+};
+
+const myProcessor = qproc.createProcessor(options);
 
 const exampleQueryObject = {
   eventType: 'in:music,sports',
   eventDate: 'gt:2018-01-01,lt:2019-01-01',
   ticketCount: 'lt:1000',
   ticketCost: 'gte:299.99'
-}
+};
 
 try {
   const result = myProcessor.exec(exampleQueryObject);
@@ -190,11 +178,36 @@ try {
     sort: {},
   }
   */
-} catch(err) {
+} catch (err) {
   /* handle error */
   console.log(err.message);
 }
 ```
+
+---
+
+## Middleware Error Handling
+
+As of v2.x, you can pass an error handler function as the second argument to the `createMiddleware` method. The error handler function must **either** send a response **or** call `next`. If an error handler is not passed to the `createMiddleware` method, then `next(err)` is called by default. Remember to make sure your application does not report stack traces in `production` or you may leak information about your application when `next(err)` is called. This is the main reason for adding support for a custom error handler.
+
+#### Error Handler Function Arguments
+
+| Arg  | Type     | Description                          |
+| ---- | -------- | ------------------------------------ |
+| err  | Object   | a JavaScript `Error` object          |
+| req  | Object   | an Express/Connect request object    |
+| res  | Object   | an Express/Connect response object   |
+| next | Function | an Express/Connect callback function |
+
+#### Example
+
+```js
+const errorHandler = (err, req, res, next) => {
+  /* handle the error */
+};
+```
+
+Refer to the [Create Middleware](#usage) section to see a more complete example.
 
 ---
 
@@ -285,9 +298,45 @@ const options = {
 const processor = qproc.createProcessor(options);
 ```
 
-Anytime the above processor detects `id` in `req.query`, it will alias it to `_id` so that the `filter` result will include `_id`.
+Anytime the above processor detects `id` in a query object, it will alias it to `_id` so that the `filter` result will include `_id`.
 
-NOTE: If an aliased field is detected but the field it is an alias for is already in `req.query`, the aliased query parameter will not be used.
+NOTE: Aliased fields are ignored if the the field they are an alias for already exists in the query object.
+
+#### Example
+
+```js
+const options = {
+  fields: {
+    myField: 'string'
+  },
+  alias: {
+    myAlias: 'myField'
+  }
+};
+
+const processor = qproc.createProcessor(options);
+
+const qObject = {
+  myField: 'my value',
+  myAlias: 'my alias value'
+};
+
+const result = processor.exec(qObject);
+
+console.log(result);
+/*
+{
+  filter: {
+    myField: {$eq: 'my value'}
+  },
+  limit: 0,
+  skip: 0,
+  sort: {}
+}
+*/
+```
+
+Notice that even though `myAlias` is in `qObject`, and is an alias for `myField`, the value for `myAlias` is ignored. This is because `myField` already exists in `qObject` and `fields` have priority over `alias`.
 
 ### Keys
 
@@ -303,10 +352,10 @@ const options = {
   searchKey: 'q'
 };
 
-const processor = qproc.createProcessor(options);
+const processor = qproc.createMiddleware(options);
 ```
 
-When the above processor executes, `req.qproc` will look like this...
+When the above middleware executes, `req.qproc` will look like this...
 
 ```js
 {
@@ -321,7 +370,7 @@ Notice that the processor uses the same keys, provided in the options, for the `
 
 ### Search
 
-When the `searchKey` is detected, the `req.qproc` filter will contain an `$or` list where each element is a `field` mapped to the provided regular expression. Only `String` fields are allowed to have a regex operator used on them.
+When the `searchKey` is detected, the `req.qproc` filter will have an `$or` property with an array of `{field: regex}` objects as its value. Only `String` fields will appear in the `$or` list since `$regex` only operates on `String` type fields.
 
 ```js
 {
@@ -340,7 +389,7 @@ NOTE: `limit`, `skip`, and `sort` will have whatever values are found in the `re
 
 ## Examples
 
-Let's assume that the following examples are going to be processed by the `myQprocProcessor` we used in the above [Usage](#usage) section.
+Let's assume that the following examples are going to be processed by the `myQprocMiddleware` we used in the above [Usage](#usage) section.
 
 ### Basic Filter
 
