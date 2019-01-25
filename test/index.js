@@ -6,7 +6,7 @@ function separator() {
   );
 }
 
-const qproc = require('./index');
+const qproc = require('../lib/qproc-mongo');
 let options = {
   fields: {
     _id: qproc.ObjectId,
@@ -22,14 +22,14 @@ let options = {
   }
 };
 
-const test = qproc.createProcessor(options);
+const test = qproc.createMiddleware(options);
 
 const req = {
   query: {
     id: 'alias for _id',
     eventType: 'in:music,sports',
     eventDate: 'gt:2018-01-01,lt:2019-01-01',
-    description: 'regex:/soen/gi',
+    description: 'regex:/^mastodon/gi',
     ticketCount: 'lt:1000',
     ticketCost: 'gte:299.99',
     sort: 'desc:eventDate,asc:ticketCount',
