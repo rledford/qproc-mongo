@@ -15,6 +15,7 @@
   - [Keys](#keys)
   - [Search](#search)
 - [Examples](#examples)
+- [Nested Fields](#querying-nested-documents)
 - [Notes](#notes)
 - [To Do](#to-do)
 
@@ -561,6 +562,62 @@ NOTE: Any combination of field filters and sorts can be used with limit and skip
   },
   /* omitted */
 }
+```
+
+---
+
+## Nested Fields
+
+It's common for database records to have nested fields. To inform `qproc-mongo` processors of the nested fields, just define it in the `fields` option using dot notation like this `"my.nested.field"` (wrapped in quotes). Here's an example.
+
+Let's say you have a collection that stores location data that looks like this. The example location data is in `GeoJSON` format.
+
+```json
+{
+  "_id": "locationDataId",
+  "location": {
+    "type": "Point",
+    "coordinates": [30.4, -90.2]
+  },
+  "timestamp": "2019-01-01T00:00:00.000Z"
+}
+```
+
+Here's an example of the `options` you can use to configure `qproc-mongo` processors so that the nested fields are queryable. This example also uses the `alias` option to make it more conveniet to access the nested location data.
+
+```js
+const qproc = require('qproc-mongo');
+
+const options = {
+  fields: {
+    'location.coordinates.0': qproc.Float,
+    'location.coordinates.1': qproc.Float
+  },
+  alias: {
+    longitude: 'location.coordinates.0',
+    latitude: 'location.coordinates.1'
+  }
+};
+
+const processor = qproc.createProcessor(options);
+
+const result = processor.exec({
+  longitude: 'gt:35,lt:34',
+  latitude: 'lt:-92,gte:-94'
+});
+
+console.log(result);
+/*
+{
+  filter: {
+    'location.coordinates.0': { $gt: 35, $lt: 34 },
+    'location.coordinates.1': { $lt: -92, $gte: -94 }
+  },
+  sort: {},
+  limit: 0,
+  skip: 0
+}
+/*
 ```
 
 ---
