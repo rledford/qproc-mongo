@@ -11,6 +11,7 @@
 - [Supported Operators](#supported-operators)
 - [Options](#options)
   - [Fields](#fields)
+    - [Wildcards](#wildcards)
   - [Alias](#alias)
   - [Keys](#keys)
   - [Search](#search)
@@ -280,6 +281,40 @@ Tip: The `ObjectId` type supports `null` as a value. This is helpful when your d
 ```
 
 If the event documents have a property named `location` that is an `ObjectId` reference to a record in another collection, then you could find any event that doesn't have a location set by using the above query parameters.
+
+#### Wildcards
+
+Field definitions support wildcards where a nested field may contain multiple fields of the same type. For example, if your collection stores some arbirary counts or totals for things that may not be known at runtime, like how many times something gets executed, then you could use wildcards to allow queries on nested fields that exist and the ones that may exist in the future.
+
+The wildcard `*` only works at the **end** of a field definition key. Multiple wildcards like this, `field.*.nested.*`, will **NOT** work.
+
+For this example, the database record model looks like this.
+
+```json
+{
+  "_id": "id",
+  "counts": {
+    "a": 100,
+    "b": 100,
+    "c": 125
+  }
+}
+```
+
+Define the options for a `qproc-mongo` processor/middleware to be aware of the queryable wildcard field(s).
+
+```js
+const qproc = require('qproc-mongo');
+
+const options = {
+  fields: {
+    _id: qproc.ObjectId,
+    'counts.*': qproc.Int
+  }
+};
+```
+
+The above field definition will allow queries on all nested fields in `counts` but assumes that all nested fields are of the **same** type.
 
 ### Alias
 
