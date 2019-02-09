@@ -1,5 +1,7 @@
 # qproc-mongo
 
+Target Node v6.4+
+
 `qproc-mongo` generates query string processors as well as middleware to use in your Express/Connect application routes. These processors translate query objects into usable MongoDB query parameters. After a qproc middleware executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
 
 ## Table of Contents
@@ -284,9 +286,7 @@ If the event documents have a property named `location` that is an `ObjectId` re
 
 #### Wildcards
 
-Field definitions support wildcards where a nested field may contain multiple fields of the same type. For example, if your collection stores some arbirary counts or totals for things that may not be known at runtime, like how many times something gets executed, then you could use wildcards to allow queries on nested fields that exist and the ones that may exist in the future.
-
-The wildcard `*` only works at the **end** of a field definition key. Multiple wildcards like this, `field.*.nested.*`, will **NOT** work.
+Field definitions support wildcards for dynamically named fields as long as you know what type they will be. For example, if your collection stores some arbirary counts or totals for things that may not be known at runtime, then you could use wildcards to allow queries on nested fields that exist and the ones that may exist in the future.
 
 For this example, the database record model looks like this.
 
@@ -297,11 +297,23 @@ For this example, the database record model looks like this.
     "a": 100,
     "b": 100,
     "c": 125
+  },
+  "nested": {
+    "dynamicKey": {
+      "counts": 100
+    }
+  },
+  "multiple": {
+    "dynamicKey": {
+      "knownKey": {
+        "dynamicKey": "value"
+      }
+    }
   }
 }
 ```
 
-Define the options for a `qproc-mongo` processor/middleware to be aware of the queryable wildcard field(s).
+Define the options for `qproc-mongo` to be aware of the dynamic field(s).
 
 ```js
 const qproc = require('qproc-mongo');
@@ -309,16 +321,18 @@ const qproc = require('qproc-mongo');
 const options = {
   fields: {
     _id: qproc.ObjectId,
-    'counts.*': qproc.Int
+    'counts.*': qproc.Int,
+    'nested.*.counts': qproc.Int,
+    'multiple.*.knownKey.*': qproc.String
   }
 };
 ```
 
-The above field definition will allow queries on all nested fields in `counts` but assumes that all nested fields are of the **same** type.
-
 ### Alias
 
 Alias definitions tell a qproc-mongo processor what fields may be present in `req.query`, that are not defined in `fields`, but should be aliased to another field definition. When a qproc-mongo processor detects an aliased field, it will convert it to the field name specified in the alias definition. This is especially useful when other developers or frameworks use `id` instead of `_id` to refer to database record IDs, or to hide the actual database record field names.
+
+NOTE: Wildcards are **NOT** supported in alias definitions.
 
 ```js
 const qproc = require('qproc-mongo');
@@ -585,7 +599,7 @@ NOTE: Any combination of field filters and sorts can be used with limit and skip
 **Request URI**
 
 ```
-/api/events?description=regex:/opeth/gi
+/api/events?description=regex:/^mastodon/gi
 ```
 
 **req.qproc Result**

@@ -16,7 +16,9 @@ let options = {
     description: qproc.String,
     ticketCount: qproc.Int,
     ticketCost: qproc.Float,
-    'totals.*': qproc.Int
+    'nested.*': qproc.Int,
+    'multiple.*.wildcards.*': qproc.Float,
+    'adjacent.wildcard.*.*': qproc.String
   },
   alias: {
     id: '_id'
@@ -35,8 +37,9 @@ const req = {
     ticketCost: 'gte:299.99',
     sort: 'desc:eventDate,asc:ticketCount',
     limit: '100',
-    'totals.ticketsSold': 'gt:1000',
-    'totals.ticketsRefunded': 'gt:50'
+    'nested.ineger': 'gt:1000',
+    'multiple.nested.wildcards.integer': 'gt:50',
+    'adjacent.wildcard.test.test': 'test'
   }
 };
 const res = {};
