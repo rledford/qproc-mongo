@@ -1,6 +1,6 @@
 {
   "name": "qproc-mongo",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "Generates query string processors as well as middleware to use in your Express/Connect application routes. The processors and middleware translate query string parameters into usable MongoDB query parameters.",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
     "string"
   ],
   "author": "rledford",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/rledford/qproc-mongo/issues"
   },
