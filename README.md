@@ -259,7 +259,7 @@ The sort order operators need to be **before** the field name they will operate 
 
 ### Fields
 
-Field definitions tell a qproc-mongo processor what fields to look for in `req.query` and what type they should be when they are converted to MongoDB query parameters. The available types are `String`, `Date`, `Int`, `Float`, and `ObjectId`. The types should be set using the `qproc-mongo` module like this.
+Field definitions tell a qproc-mongo processor what fields to look for in `req.query` and what type they should be when they are converted to MongoDB query parameters. The available types are `String`, `Date`, `Int`, `Float`, `Boolean`, and `ObjectId`. The types should be set using the `qproc-mongo` module like this.
 
 ```js
 const qproc = require('qproc-mongo');
@@ -269,7 +269,8 @@ const options = {
     eventType: qproc.String,
     eventDate: qproc.Date,
     ticketCount: qproc.Int,
-    ticketCost: qproc.Float
+    ticketCost: qproc.Float,
+    isConfirmed: qproc.Boolean
   }
 };
 
