@@ -31,7 +31,7 @@ const test = qproc.createMiddleware(options);
 const req = {
   query: {
     id: 'alias for _id',
-    eventType: 'in:music,sports',
+    eventType: 'in:music,sports,null',
     eventDate: 'gt:2018-01-01,lt:2019-01-01',
     description: 'regex:/^mastodon/gi',
     ticketCount: 'lt:1000',
@@ -57,5 +57,8 @@ console.log('EXPECTED RESULT: valid MongoDB query parameters');
 
 console.log('****** REQUEST QUERY INPUT *******\n', req.query);
 test(req, res, next);
-console.log('********* QPROC OUTPUT **********\n', req.qproc);
+console.log(
+  '********* QPROC OUTPUT **********\n',
+  JSON.stringify(req.qproc, null, 2)
+);
 separator();
