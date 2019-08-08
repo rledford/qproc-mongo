@@ -40,18 +40,70 @@ If you're upgrading from v1.x to v2.x the only breaking change is that `createPr
 
 ## Usage
 
+---
+
+### Create Processor
+
+The processor returned by `createProcessor` can be used on query objects directly if you want to include it somewhere else or inside your own middleware.
+
+```js
+const qproc = require('qproc-mongo');
+
+const options = {
+  fields: {
+    _id: qproc.ObjectId,
+    eventType: qproc.String,
+    eventDate: qproc.Date,
+    ticketCount: qproc.Int,
+    ticketCost: qproc.Float
+  },
+  alias: {
+    id: '_id'
+  }
+};
+
+const myProcessor = qproc.createProcessor(options);
+
+const exampleQueryObject = {
+  eventType: 'in:music,sports',
+  eventDate: 'gt:2018-01-01,lt:2019-01-01',
+  ticketCount: 'lt:1000',
+  ticketCost: 'gte:299.99'
+};
+
+try {
+  const result = myProcessor.exec(exampleQueryObject);
+  console.log(result);
+  /*
+  {
+    filter: {
+      eventType: { '$in': ['music', 'sports'] },
+      eventDate:
+      { '$gt': '2018-01-01T00:00:00.000Z',
+        '$lt': '2019-01-01T00:00:00.000Z' },
+      ticketCount: { '$lt': 1000 },
+      ticketCost: { '$gte': 299.99 }
+    },
+    limit: 0,
+    skip: 0
+    sort: {},
+  }
+  */
+} catch (err) {
+  /* handle error */
+  console.log(err.message);
+}
+```
+
+---
+
 ### Create Middleware
 
 ```js
-/*
-  assuming that 'app' and 'db' have already been created using
-  Express and a MongoDB client
-*/
-
 // require module
 const qproc = require('qproc-mongo');
 
-// custom error handler
+// custom error handler (optional)
 const errorHandler = (err, req, res, next) => {
   res.status(400).json({
     error: {
@@ -132,61 +184,6 @@ After `myQprocMiddleware` executes, `req.qproc` looks like this...
 ```
 
 The result from the middleware can be used to execute a query that will find any document that has an `eventType` of `music` or `sports`, is within the provided `eventDate` constraints, has a `ticketCount` that is less than 1000, and has a `ticketCost` that is greater than or equal to 299.99.
-
----
-
-### Create Processor
-
-The processor returned by `createProcessor` can be used on query objects directly if you want to include it somewhere else or inside your own middleware.
-
-```js
-const qproc = require('qproc-mongo');
-
-const options = {
-  fields: {
-    _id: qproc.ObjectId,
-    eventType: qproc.String,
-    eventDate: qproc.Date,
-    ticketCount: qproc.Int,
-    ticketCost: qproc.Float
-  },
-  alias: {
-    id: '_id'
-  }
-};
-
-const myProcessor = qproc.createProcessor(options);
-
-const exampleQueryObject = {
-  eventType: 'in:music,sports',
-  eventDate: 'gt:2018-01-01,lt:2019-01-01',
-  ticketCount: 'lt:1000',
-  ticketCost: 'gte:299.99'
-};
-
-try {
-  const result = myProcessor.exec(exampleQueryObject);
-  console.log(result);
-  /*
-  {
-    filter: {
-      eventType: { '$in': ['music', 'sports'] },
-      eventDate:
-      { '$gt': '2018-01-01T00:00:00.000Z',
-        '$lt': '2019-01-01T00:00:00.000Z' },
-      ticketCount: { '$lt': 1000 },
-      ticketCost: { '$gte': 299.99 }
-    },
-    limit: 0,
-    skip: 0
-    sort: {},
-  }
-  */
-} catch (err) {
-  /* handle error */
-  console.log(err.message);
-}
-```
 
 ---
 
@@ -277,13 +274,22 @@ const options = {
 const processor = qproc.createProcessor(options);
 ```
 
-Tip: The `ObjectId` type supports `null` as a value. This is helpful when your documents use references to other documents. Example.
+All field types support `null` as a value.
 
-```
-/api/events?location=null
+Notice that `eventDate` is type _Date_ and `eventType` is type _String_.
+
+The query string for this URL `/api/events?eventDate=null&eventType=null` would be iterperetted as:
+
+```js
+{
+  filter: {
+    eventDate: {$eq: null},
+    eventType: {$eq: null}
+  }
+}
 ```
 
-If the event documents have a property named `location` that is an `ObjectId` reference to a record in another collection, then you could find any event that doesn't have a location set by using the above query parameters.
+Notice that the `eventType` is `null` and not the _String_ `"null"`.
 
 #### Wildcards
 
@@ -676,7 +682,7 @@ console.log(result);
 
 ### createProcessor(options)
 
-When `createProcessor()` is called without providing any `options`, a warning message will be shown in the console. A processor that is using the default options will always have the `req.qproc.filter` value set to `{}`, so be careful.
+A processor that is using the default options will always have the `req.qproc.filter` value set to `{}`, so be careful.
 
 ### Missing or Empty req.query
 
