@@ -228,6 +228,7 @@ The filter operators need to be **before** the value(s) they will operate on.
 | gte      | Greater than or equal to                                     | `gte:value`     |
 | lt       | Less than                                                    | `lt:value`      |
 | lte      | Less than or equal to                                        | `lte:value`     |
+| all      | Array contains all provided values                           | `all:a,b,c`     |
 | regex    | Regular expression                                           | `regex:/^abc/i` |
 
 NOTE: Invalid `regex` values are not included in the `filter`. Not providing a value after the `regex` operator will result in `/(:?)/` being used which will match anything. Also, if the field type, that `regex` is operating on, is not `qproc.String`, then it will not be included in the `filter`.
