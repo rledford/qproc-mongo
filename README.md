@@ -2,14 +2,30 @@
 
 Target Node v6.4+
 
-`qproc-mongo` generates query string processors as well as middleware to use in your Express/Connect application routes. These processors translate query objects into usable MongoDB query parameters. After a qproc middleware executes on an incoming request, a new `req.qproc` result is available to the request handlers that follow.
+`qproc-mongo` creates query string processors that translate query objects into MongoDB queries.
+
+## Features
+
+- Easy configuration.
+
+- Supports the most common MongoDB operators.
+
+- Easy-to-use query string syntax.
+
+- Ensures that only the fields defined in the options are allowed in the MongoDB filter.
+
+- Supports one or more aliases for each field. You may want to allow someone to query a field, like `fname`, with `firstName` instead. Both will work.
+
+- Supports default field values.
+
+- Supports wildcards for nested fields. These will allow you to use `*` in place of a nested field, like `sensor.*.temp.value`, where `*` is used in place of a dynamic sensor identifier.
+
+- Easy to add a query processor to your Express/Connect routes. After the middleware executes, the result will be available in the request object's `qproc` property.
 
 ## Table of Contents
 
 - [Install](#install)
-- [Upgrade](#upgrade)
 - [Usage](#usage)
-- [Middleware Error Handling](#middleware-error-handling)
 - [Supported Operators](#supported-operators)
 - [Options](#options)
   - [Fields](#fields)
@@ -32,39 +48,31 @@ npm install qproc-mongo
 
 ---
 
-## Upgrade
-
-### v1.x to v2.x
-
-If you're upgrading from v1.x to v2.x the only breaking change is that `createProcessor` no longer returns a middleware, but instead returns an object that includes a single `exec` method. The only thing you will have to do to upgrade to v2.x is change your `createProcessor` calls to `createMiddleware`.
-
 ## Usage
 
 ---
 
-### Create Processor
-
-The processor returned by `createProcessor` can be used on query objects directly if you want to include it somewhere else or inside your own middleware.
+### Processor
 
 ```js
 const qproc = require('qproc-mongo');
 
 const options = {
   fields: {
-    _id: qproc.ObjectId,
+    _id: {
+      type: qproc.ObjectId,
+      alias: 'id'
+    },
     eventType: qproc.String,
     eventDate: qproc.Date,
     ticketCount: qproc.Int,
     ticketCost: qproc.Float
-  },
-  alias: {
-    id: '_id'
   }
 };
 
-const myProcessor = qproc.createProcessor(options);
+const proc = qproc.createProcessor(options);
 
-const exampleQueryObject = {
+const q = {
   eventType: 'in:music,sports',
   eventDate: 'gt:2018-01-01,lt:2019-01-01',
   ticketCount: 'lt:1000',
@@ -72,7 +80,7 @@ const exampleQueryObject = {
 };
 
 try {
-  const result = myProcessor.exec(exampleQueryObject);
+  const result = proc.exec(q);
   console.log(result);
   /*
   {
@@ -91,46 +99,40 @@ try {
   */
 } catch (err) {
   /* handle error */
-  console.log(err.message);
 }
 ```
 
 ---
 
-### Create Middleware
+### Middleware
+
+As of v2.x, you can pass an error handler function as the second argument to the `createMiddleware` method. The error handler function must **either** send a response **or** call `next`. If an error handler is not passed to the `createMiddleware` method, then `next(err)` is called by default. Remember to make sure your application does not report stack traces in `production` or you may leak information about your application when `next(err)` is called. This is the main reason for adding support for a custom error handler.
 
 ```js
 // require module
 const qproc = require('qproc-mongo');
 
-// custom error handler (optional)
-const errorHandler = (err, req, res, next) => {
+// create middleware
+const eventsQueryProcessor = qproc.createMiddleware({
+  fields: {
+    _id: {
+      type: qproc.ObjectId,
+      alias: 'id'
+    },
+    eventType: qproc.String,
+    eventDate: qproc.Date,
+    ticketCount: qproc.Int,
+    ticketCost: qproc.Float
+  }
+}, (err, req, res, next) => {
   res.status(400).json({
     error: {
       status: 400,
       message: err.message
     }
-  });
-};
+  }););
 
-// options
-const options = {
-  fields: {
-    _id: qproc.ObjectId,
-    eventType: qproc.String,
-    eventDate: qproc.Date,
-    ticketCount: qproc.Int,
-    ticketCost: qproc.Float
-  },
-  alias: {
-    id: '_id'
-  }
-};
-
-// create middleware
-const myQprocMiddleware = qproc.createMiddleware(options, errorHandler);
-
-app.use('/api/events', myQprocMiddleware, (req, res) => {
+app.use('/api/events', eventsQueryProcessor, (req, res) => {
   const { filter, limit, skip, sort } = req.qproc;
 
   db.collection('events')
@@ -148,73 +150,11 @@ app.use('/api/events', myQprocMiddleware, (req, res) => {
 });
 ```
 
-For this middleware example, the request URI looks like this...
-
-```
-http://localhost:3000/api/events?eventType=in:music,sports&eventDate=gt:2018-01-01,lt:2019-01-01&ticketCount=lt:1000&ticketCost=gte:299.99
-```
-
-The `req.query` object then looks like this...
-
-```js
-{
-  eventType: 'in:music,sports',
-  eventDate: 'gt:2018-01-01,lt:2019-01-01',
-  ticketCount: 'lt:1000',
-  ticketCost: 'gte:299.99'
-}
-```
-
-After `myQprocMiddleware` executes, `req.qproc` looks like this...
-
-```js
-{
-  filter: {
-    eventType: { '$in': ['music', 'sports'] },
-    eventDate:
-    { '$gt': '2018-01-01T00:00:00.000Z',
-      '$lt': '2019-01-01T00:00:00.000Z' },
-    ticketCount: { '$lt': 1000 },
-    ticketCost: { '$gte': 299.99 }
-  },
-  limit: 0,
-  skip: 0
-  sort: {},
-}
-```
-
-The result from the middleware can be used to execute a query that will find any document that has an `eventType` of `music` or `sports`, is within the provided `eventDate` constraints, has a `ticketCount` that is less than 1000, and has a `ticketCost` that is greater than or equal to 299.99.
-
----
-
-## Middleware Error Handling
-
-As of v2.x, you can pass an error handler function as the second argument to the `createMiddleware` method. The error handler function must **either** send a response **or** call `next`. If an error handler is not passed to the `createMiddleware` method, then `next(err)` is called by default. Remember to make sure your application does not report stack traces in `production` or you may leak information about your application when `next(err)` is called. This is the main reason for adding support for a custom error handler.
-
-#### Error Handler Function Arguments
-
-| Arg  | Type     | Description                          |
-| ---- | -------- | ------------------------------------ |
-| err  | Object   | a JavaScript `Error` object          |
-| req  | Object   | an Express/Connect request object    |
-| res  | Object   | an Express/Connect response object   |
-| next | Function | an Express/Connect callback function |
-
-#### Example
-
-```js
-const errorHandler = (err, req, res, next) => {
-  /* handle the error */
-};
-```
-
-Refer to the [Create Middleware](#usage) section to see a more complete example.
-
 ---
 
 ## Supported Operators
 
-### Filter Operators
+### Filter
 
 The filter operators need to be **before** the value(s) they will operate on.
 
@@ -228,12 +168,12 @@ The filter operators need to be **before** the value(s) they will operate on.
 | gte      | Greater than or equal to                                     | `gte:value`     |
 | lt       | Less than                                                    | `lt:value`      |
 | lte      | Less than or equal to                                        | `lte:value`     |
-| all      | Array contains all provided values                           | `all:a,b,c`     |
+| all      | Contains all values - Multiple values separated by a `,`     | `all:a,b,c`     |
 | regex    | Regular expression                                           | `regex:/^abc/i` |
 
 NOTE: Invalid `regex` values are not included in the `filter`. Not providing a value after the `regex` operator will result in `/(:?)/` being used which will match anything. Also, if the field type, that `regex` is operating on, is not `qproc.String`, then it will not be included in the `filter`.
 
-### Sort Order Operators
+### Sort
 
 The sort order operators need to be **before** the field name they will operate on. The default sort order is **ascending** when a sort order operator is not present.
 
@@ -248,12 +188,22 @@ The sort order operators need to be **before** the field name they will operate 
 
 | Option    | Default  | Description                                                                                                    |
 | --------- | -------- | -------------------------------------------------------------------------------------------------------------- |
-| fields    | `{}`     | key:value pairs that will identify query filter fields and their associated types                              |
+| fields    | `{}`     | key:value pairs that will identify query filter fields and their associated types, defaults, and aliases       |
 | alias     | `{}`     | key:value pairs where `key` is the aliased field name and `value` is what field in `fields` it is an alias for |
 | limitKey  | `limit`  | used to identify the limit parameter                                                                           |
 | skipKey   | `skip`   | used to identify the skip parameter                                                                            |
 | sortKey   | `sort`   | used to identify the sort parameter                                                                            |
 | searchKey | `search` | used to identify the search parameter                                                                          |
+
+### Field Types
+
+| Type     | Example        | Value      |
+| -------- | -------------- | ---------- |
+| Int      | qproc.Int      | 'int'      |
+| Float    | qproc.Float    | 'float'    |
+| String   | qproc.String   | 'string'   |
+| Boolean  | qproc.Boolean  | 'boolean'  |
+| ObjectId | qproc.ObjectId | 'objectId' |
 
 ### Fields
 
