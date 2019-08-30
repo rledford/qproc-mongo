@@ -12,8 +12,14 @@ let options = {
     _id: qproc.ObjectId,
     eventType: qproc.String,
     eventName: qproc.String,
-    eventDate: qproc.Date,
-    description: qproc.String,
+    eventDate: {
+      type: qproc.Date,
+      default: Date.now
+    },
+    description: {
+      type: qproc.String,
+      alias: ['info', 'desc']
+    },
     sponsors: qproc.String,
     ticketCount: qproc.Int,
     ticketCost: qproc.Float,
