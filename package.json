@@ -1,7 +1,7 @@
 {
   "name": "qproc-mongo",
   "version": "2.3.1",
-  "description": "Generates query string processors as well as middleware to use in your Express/Connect application routes. The processors and middleware translate query string parameters into usable MongoDB query parameters.",
+  "description": "Creates query object processors that translate query objects into MongoDB queries.",
   "main": "index.js",
   "scripts": {
     "test": "node test"
