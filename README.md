@@ -2,25 +2,25 @@
 
 Target Node v6.4+
 
-`qproc-mongo` creates query string processors that translate query objects into MongoDB queries.
+`qproc-mongo` creates query object processors that translate query objects into MongoDB queries.
 
 ## Features
 
 - Easy configuration.
 
-- Supports the most common MongoDB operators.
+- Supports common MongoDB operators.
 
-- Easy-to-use query string syntax.
+- Simple query string syntax.
 
 - Ensures that only the fields defined in the options are allowed in the MongoDB filter.
 
-- Supports one or more aliases for each field. You may want to allow someone to query a field, like `fname`, with `firstName` instead. Both will work.
+- Supports one or more aliases for each field.
 
 - Supports default field values.
 
-- Supports wildcards for nested fields. These will allow you to use `*` in place of a nested field, like `sensor.*.temp.value`, where `*` is used in place of a dynamic sensor identifier.
+- Supports wildcards for nested fields.
 
-- Easy to add a query processor to your Express/Connect routes. After the middleware executes, the result will be available in the request object's `qproc` property.
+- Easy to add a query processor to your Express/Connect routes.
 
 ## Table of Contents
 
@@ -32,11 +32,8 @@ Target Node v6.4+
     - [Wildcards](#wildcards)
   - [Alias](#alias)
   - [Keys](#keys)
-  - [Search](#search)
 - [Examples](#examples)
-- [Nested Fields](#querying-nested-documents)
-- [Notes](#notes)
-- [To Do](#to-do)
+- [Nested Fields](#nested-documents)
 
 ---
 
@@ -55,74 +52,67 @@ npm install qproc-mongo
 ### Processor
 
 ```js
-const qproc = require('qproc-mongo');
+const qproc = require("qproc-mongo");
 
 const options = {
   fields: {
     _id: {
       type: qproc.ObjectId,
-      alias: 'id'
+      alias: "id"
     },
-    eventType: qproc.String,
-    eventDate: qproc.Date,
-    ticketCount: qproc.Int,
-    ticketCost: qproc.Float
+    type: qproc.String,
+    date: qproc.Date,
+    count: qproc.Int,
+    cost: qproc.Float
   }
 };
 
 const proc = qproc.createProcessor(options);
 
 const q = {
-  eventType: 'in:music,sports',
-  eventDate: 'gt:2018-01-01,lt:2019-01-01',
-  ticketCount: 'lt:1000',
-  ticketCost: 'gte:299.99'
+  type: "in:a,b",
+  date: "gt:2018-01-01,lt:2019-01-01",
+  count: "lt:1000",
+  cost: "gte:299.99"
 };
 
-try {
-  const result = proc.exec(q);
-  console.log(result);
-  /*
-  {
-    filter: {
-      eventType: { '$in': ['music', 'sports'] },
-      eventDate:
-      { '$gt': '2018-01-01T00:00:00.000Z',
-        '$lt': '2019-01-01T00:00:00.000Z' },
-      ticketCount: { '$lt': 1000 },
-      ticketCost: { '$gte': 299.99 }
-    },
-    limit: 0,
-    skip: 0
-    sort: {},
-  }
-  */
-} catch (err) {
-  /* handle error */
+proc.exec(q);
+/*
+{
+  filter: {
+    type: { '$in': ['a', 'b'] },
+    date:
+    { '$gt': '2018-01-01T00:00:00.000Z',
+      '$lt': '2019-01-01T00:00:00.000Z' },
+    count: { '$lt': 1000 },
+    cost: { '$gte': 299.99 }
+  },
+  limit: 0,
+  skip: 0
+  sort: {},
 }
+*/
 ```
 
 ---
 
 ### Middleware
 
-As of v2.x, you can pass an error handler function as the second argument to the `createMiddleware` method. The error handler function must **either** send a response **or** call `next`. If an error handler is not passed to the `createMiddleware` method, then `next(err)` is called by default. Remember to make sure your application does not report stack traces in `production` or you may leak information about your application when `next(err)` is called. This is the main reason for adding support for a custom error handler.
-
 ```js
 // require module
 const qproc = require('qproc-mongo');
 
 // create middleware
-const eventsQueryProcessor = qproc.createMiddleware({
+const qp = qproc.createMiddleware({
   fields: {
     _id: {
       type: qproc.ObjectId,
       alias: 'id'
     },
-    eventType: qproc.String,
-    eventDate: qproc.Date,
-    ticketCount: qproc.Int,
-    ticketCost: qproc.Float
+    type: qproc.String,
+    date: qproc.Date,
+    count: qproc.Int,
+    cost: qproc.Float
   }
 }, (err, req, res, next) => {
   res.status(400).json({
@@ -132,7 +122,7 @@ const eventsQueryProcessor = qproc.createMiddleware({
     }
   }););
 
-app.use('/api/events', eventsQueryProcessor, (req, res) => {
+app.use('/api', qp, (req, res) => {
   const { filter, limit, skip, sort } = req.qproc;
 
   db.collection('events')
@@ -154,33 +144,29 @@ app.use('/api/events', eventsQueryProcessor, (req, res) => {
 
 ## Supported Operators
 
-### Filter
+### Filter Operators
 
-The filter operators need to be **before** the value(s) they will operate on.
+| Operator | Description                                                  | Example Query String    |
+| -------- | ------------------------------------------------------------ | ----------------------- |
+| eq       | Equal                                                        | `?field=eq:value`       |
+| ne       | Not equal                                                    | `?field=ne:value`       |
+| in       | In a list of values - Multiple values separated by a `,`     | `?field=in:a,b,c`       |
+| nin      | Not in a list of values - Multiple values separated by a `,` | `?field=nin:a,b,c`      |
+| gt       | Greater than                                                 | `?field=gt:value`       |
+| gte      | Greater than or equal to                                     | `?field=gte:value`      |
+| lt       | Less than                                                    | `?field=lt:value`       |
+| lte      | Less than or equal to                                        | `?field=lte:value`      |
+| all      | Contains all values - Multiple values separated by a `,`     | `?field=all:a,b,c`      |
+| regex    | Regular expression - only works with _String_ fields         | `?field=regex:/^text/i` |
 
-| Operator | Description                                                  | Example         |
-| -------- | ------------------------------------------------------------ | --------------- |
-| eq       | Equal                                                        | `eq:value`      |
-| ne       | Not equal                                                    | `ne:value`      |
-| in       | In a list of values - Multiple values separated by a `,`     | `in:a,b,c`      |
-| nin      | Not in a list of values - Multiple values separated by a `,` | `nin:a,b,c`     |
-| gt       | Greater than                                                 | `gt:value`      |
-| gte      | Greater than or equal to                                     | `gte:value`     |
-| lt       | Less than                                                    | `lt:value`      |
-| lte      | Less than or equal to                                        | `lte:value`     |
-| all      | Contains all values - Multiple values separated by a `,`     | `all:a,b,c`     |
-| regex    | Regular expression                                           | `regex:/^abc/i` |
+### Sort Operators
 
-NOTE: Invalid `regex` values are not included in the `filter`. Not providing a value after the `regex` operator will result in `/(:?)/` being used which will match anything. Also, if the field type, that `regex` is operating on, is not `qproc.String`, then it will not be included in the `filter`.
+The sort order operators need to be _before_ the field name they will operate on. The default sort order is _ascending_ when a sort order operator is not present.
 
-### Sort
-
-The sort order operators need to be **before** the field name they will operate on. The default sort order is **ascending** when a sort order operator is not present.
-
-| Operator | Description | Example          |
-| -------- | ----------- | ---------------- |
-| asc      | Ascending   | `asc:eventDate`  |
-| desc     | Descending  | `desc:eventDate` |
+| Operator | Description | Example Query String           |
+| -------- | ----------- | ------------------------------ |
+| asc      | Ascending   | `?field=value&sort=asc:field`  |
+| desc     | Descending  | `?field=value&sort=desc:field` |
 
 ---
 
@@ -197,7 +183,7 @@ The sort order operators need to be **before** the field name they will operate 
 
 ### Field Types
 
-| Type     | Example        | Value      |
+| Type     |                | Value      |
 | -------- | -------------- | ---------- |
 | Int      | qproc.Int      | 'int'      |
 | Float    | qproc.Float    | 'float'    |
@@ -207,46 +193,34 @@ The sort order operators need to be **before** the field name they will operate 
 
 ### Fields
 
-Field definitions tell a qproc-mongo processor what fields to look for in `req.query` and what type they should be when they are converted to MongoDB query parameters. The available types are `String`, `Date`, `Int`, `Float`, `Boolean`, and `ObjectId`. The types should be set using the `qproc-mongo` module like this.
+Define which fields should be allowed and what type they are expected to be. It's also possible to set the default value, with a single value or a function that returns a value, for a field if it is not found in the query object.
 
 ```js
-const qproc = require('qproc-mongo');
+const qproc = require("qproc-mongo");
 const options = {
   fields: {
-    _id: qproc.ObjectId,
-    eventType: qproc.String,
-    eventDate: qproc.Date,
-    ticketCount: qproc.Int,
-    ticketCost: qproc.Float,
-    isConfirmed: qproc.Boolean
+    _id: {
+      type: qproc.ObjectId,
+      alias: 'id'
+    },
+    type: qproc.String,
+    date: {
+      type: qproc.Date,
+      default: () => new Date()
+    }
+    count: qproc.Int,
+    cost: qproc.Float,
   }
 };
 
 const processor = qproc.createProcessor(options);
 ```
 
-All field types support `null` as a value.
-
-Notice that `eventDate` is type _Date_ and `eventType` is type _String_.
-
-The query string for this URL `/api/events?eventDate=null&eventType=null` would be iterperetted as:
-
-```js
-{
-  filter: {
-    eventDate: {$eq: null},
-    eventType: {$eq: null}
-  }
-}
-```
-
-Notice that the `eventType` is `null` and not the _String_ `"null"`.
-
 #### Wildcards
 
-Field definitions support wildcards for dynamically named fields as long as you know what type they will be. For example, if your collection stores some arbirary counts or totals for things that may not be known at runtime, then you could use wildcards to allow queries on nested fields that exist and the ones that may exist in the future.
+Field definitions support wildcards for dynamically named fields as long as you know what type they will be.
 
-For this example, the database record model looks like this.
+Example database record:
 
 ```json
 {
@@ -255,164 +229,89 @@ For this example, the database record model looks like this.
     "a": 100,
     "b": 100,
     "c": 125
-  },
-  "nested": {
-    "dynamicKey": {
-      "counts": 100
-    }
-  },
-  "multiple": {
-    "dynamicKey": {
-      "knownKey": {
-        "dynamicKey": "value"
-      }
-    }
   }
 }
 ```
 
-Define the options for `qproc-mongo` to be aware of the dynamic field(s).
+Define the options for `qproc-mongo` to query the nested fields.
 
 ```js
-const qproc = require('qproc-mongo');
+const qproc = require("qproc-mongo");
 
 const options = {
   fields: {
     _id: qproc.ObjectId,
-    'counts.*': qproc.Int,
-    'nested.*.counts': qproc.Int,
-    'multiple.*.knownKey.*': qproc.String
+    "counts.*": qproc.Int
   }
 };
 ```
 
 ### Alias
 
-Alias definitions tell a qproc-mongo processor what fields may be present in `req.query`, that are not defined in `fields`, but should be aliased to another field definition. When a qproc-mongo processor detects an aliased field, it will convert it to the field name specified in the alias definition. This is especially useful when other developers or frameworks use `id` instead of `_id` to refer to database record IDs, or to hide the actual database record field names.
-
-NOTE: Wildcards are **NOT** supported in alias definitions.
+Define one or more aliases for any field. Aliased fields are ignored if the field they are an alias for already exists in the query object. Wildcards are not supported in aliases.
 
 ```js
-const qproc = require('qproc-mongo');
+const qproc = require("qproc-mongo");
 const options = {
   fields: {
-    _id: qproc.ObjectId
+    _id: {
+      type: qproc.ObjectId
+      alias: 'id'
+    },
+    'location.0': {
+      type: qproc.Float,
+      alias: ['longitude', 'lng', 'x']
+    }
+    'location.1': {
+      type: qproc.Float,
+      alias: ['latitude', 'lat', 'y']
+    }
   },
-  alias: {
-    id: '_id'
-  }
 };
 
 const processor = qproc.createProcessor(options);
 ```
-
-Anytime the above processor detects `id` in a query object, it will alias it to `_id` so that the `filter` result will include `_id`.
-
-NOTE: Aliased fields are ignored if the the field they are an alias for already exists in the query object.
-
-#### Example
-
-```js
-const options = {
-  fields: {
-    myField: 'string'
-  },
-  alias: {
-    myAlias: 'myField'
-  }
-};
-
-const processor = qproc.createProcessor(options);
-
-const qObject = {
-  myField: 'my value',
-  myAlias: 'my alias value'
-};
-
-const result = processor.exec(qObject);
-
-console.log(result);
-/*
-{
-  filter: {
-    myField: {$eq: 'my value'}
-  },
-  limit: 0,
-  skip: 0,
-  sort: {}
-}
-*/
-```
-
-Notice that even though `myAlias` is in `qObject`, and is an alias for `myField`, the value for `myAlias` is ignored. This is because `myField` already exists in `qObject` and `fields` have priority over `alias`.
 
 ### Keys
 
-If you need to have different key identifiers, other than `limit`, `skip`, `sort`, and `search`, because they are being used by the documents in your collection, or you just prefer something else, you can set them in the options.
+If you need to have different key identifiers, other than `limit`, `skip`, `sort`, and `search`, you can set them in the options. The keys you specify will be the same in the qproc result.
 
 ```js
-const qproc = require('qproc-mongo');
+const qproc = require("qproc-mongo");
 const options = {
-  /* field definitions */
-  limitKey: 'count',
-  skipKey: 'offset',
-  sortKey: 'orderBy',
-  searchKey: 'q'
+  fields: {
+    _id: {
+      type: qproc.ObjectId,
+      alias: [ 'id' ]
+    }
+  }
+  limitKey: "count",
+  skipKey: "offset",
+  sortKey: "orderBy",
+  searchKey: "q"
 };
 
 const processor = qproc.createMiddleware(options);
 ```
 
-When the above middleware executes, `req.qproc` will look like this...
-
-```js
-{
-  filter: {/* based on field definitions */},
-  count: 0,
-  offset: 0,
-  orderBy: {}
-}
-```
-
-Notice that the processor uses the same keys, provided in the options, for the `req.qroc` results. Now you don't have to keep track of which key is used in processing and which one is used in the result.
-
-### Search
-
-When the `searchKey` is detected, the `req.qproc` filter will have an `$or` property with an array of `{field: regex}` objects as its value. Only `String` fields will appear in the `$or` list since `$regex` only operates on `String` type fields.
-
-```js
-{
-  filter: {
-    $or: [{field: /search-text/i}, {field: /search-text/i}]
-  },
-  limit: 0,
-  skip: 0,
-  sort: {}
-}
-```
-
-NOTE: `limit`, `skip`, and `sort` will have whatever values are found in the `req.query` input.
-
 ---
 
 ## Examples
 
-Let's assume that the following examples are going to be processed by the `myQprocMiddleware` we used in the above [Usage](#usage) section.
-
 ### Basic Filter
 
-**Request URI**
+**Request Query String**
 
 ```
-/api/events?eventType=music
+?type=music
 ```
 
-**req.qproc Result**
+**qproc Result**
 
 ```js
 {
   filter: {
-    eventType: {$eq: 'music'}
+    type: {$eq: 'music'}
   },
   /* omitted */
 }
@@ -420,10 +319,10 @@ Let's assume that the following examples are going to be processed by the `myQpr
 
 ### Basic Filter with Aliased Field
 
-**Request URI**
+**Request Query String**
 
 ```
-/api/events?id=event_id
+?id=1
 ```
 
 **req.qproc Result**
@@ -431,7 +330,7 @@ Let's assume that the following examples are going to be processed by the `myQpr
 ```js
 {
   filter: {
-    _id: {$eq: 'event_id'}
+    _id: {$eq: '1'}
   },
   /* omitted */
 }
@@ -439,10 +338,10 @@ Let's assume that the following examples are going to be processed by the `myQpr
 
 ### Filter with Ranges
 
-**Request URI**
+**Request Query String**
 
 ```
-/api/events?eventDate=gte:2018-01-01,lt:2019-01-01&ticketCost=gt:30.0,lt:100.0
+?date=gte:2018-01-01,lt:2019-01-01&cost=gt:30.0,lt:100.0
 ```
 
 **req.qproc Result**
@@ -450,11 +349,11 @@ Let's assume that the following examples are going to be processed by the `myQpr
 ```js
 {
   filter: {
-    eventDate: {
+    date: {
       $gte: '2018-01-01T00:00:00.000Z',
       $lt: '2019-01-01T00:00:00.000Z'
     },
-    ticketCost: {
+    cost: {
       $gt: 30.0,
       $lt: 100.0
     }
@@ -465,10 +364,10 @@ Let's assume that the following examples are going to be processed by the `myQpr
 
 ### Filter and Sort
 
-**Request URI**
+**Request Query String**
 
 ```
-/api/events?eventType=music&sort=asc:eventDate
+?type=a&sort=asc:date
 ```
 
 **req.qproc Result**
@@ -476,10 +375,10 @@ Let's assume that the following examples are going to be processed by the `myQpr
 ```js
 {
   filter: {
-    eventType: {$eq: 'music'}
+    type: {$eq: 'a'}
   },
   sort: {
-    eventDate: 1
+    date: 1
   },
   /* omitted */
 }
@@ -487,21 +386,19 @@ Let's assume that the following examples are going to be processed by the `myQpr
 
 ### Using in: to Filter with a List of Values
 
-**Request URI**
+**Request Query String**
 
 ```
-/api/events?eventType=in:music,sports
+?type=in:a,b
 ```
-
-NOTE: The values that follow `in:` are comma-delimited without spaces between them
 
 **req.qproc Result**
 
 ```js
 {
   filter: {
-    eventType: {
-      $in: ['music', 'sports'];
+    type: {
+      $in: ['a', 'b'];
     }
   },
   /* omitted */
@@ -510,42 +407,40 @@ NOTE: The values that follow `in:` are comma-delimited without spaces between th
 
 ### Using nin: to Filter with a List of Values
 
-**Request URI**
+**Request Query String**
 
 ```
-/api/events?eventType=nin:music,sports
+?type=nin:a,b
 ```
-
-NOTE: The values that follow `nin:` are comma-delimited without spaces between them
 
 **req.qproc Result**
 
 ```js
 {
   filter: {
-    eventType: {
-      $nin: ['music', 'sports'];
+    type: {
+      $nin: ["a", "b"];
     }
   }
   /* omitted */
 }
 ```
 
-### Using Limit and Skip for Pagination
+### Using Limit and Skip
 
-**Request URI**
+**Request Query String**
 
 ```
-/api/events?limit=100&skip=200
+?name=in:a,b,c,d&limit=100&skip=200
 ```
-
-NOTE: Any combination of field filters and sorts can be used with limit and skip.
 
 **req.qproc Result**
 
 ```js
 {
-  filter: {},
+  filter: {
+    name: { $in: [ 'a','b','c' ] }
+  },
   limit: 100,
   skip: 200,
   /* omitted */
@@ -554,10 +449,10 @@ NOTE: Any combination of field filters and sorts can be used with limit and skip
 
 ### Using regex: to Search String Fields
 
-**Request URI**
+**Request Query String**
 
 ```
-/api/events?description=regex:/^mastodon/gi
+?description=regex:/^text/gi
 ```
 
 **req.qproc Result**
@@ -565,7 +460,7 @@ NOTE: Any combination of field filters and sorts can be used with limit and skip
 ```js
 {
   filter: {
-    description: { $regex: /^mastodon/gi}
+    description: { $regex: /^text/gi}
   },
   /* omitted */
 }
@@ -575,13 +470,11 @@ NOTE: Any combination of field filters and sorts can be used with limit and skip
 
 ## Nested Fields
 
-It's common for database records to have nested fields. To inform `qproc-mongo` processors of the nested fields, just define it in the `fields` option using dot notation like this `"my.nested.field"` (wrapped in quotes). Here's an example.
-
-Let's say you have a collection that stores location data that looks like this. The example location data is in `GeoJSON` format.
+Example database record:
 
 ```json
 {
-  "_id": "locationDataId",
+  "_id": "5d585f1c055ae70bd45bcd49",
   "location": {
     "type": "Point",
     "coordinates": [30.4, -90.2]
@@ -590,7 +483,7 @@ Let's say you have a collection that stores location data that looks like this. 
 }
 ```
 
-Here's an example of the `options` you can use to configure `qproc-mongo` processors so that the nested fields are queryable. This example also uses the `alias` option to make it more conveniet to access the nested location data.
+Example options to query nested fields:
 
 ```js
 const qproc = require('qproc-mongo');
@@ -608,12 +501,11 @@ const options = {
 
 const processor = qproc.createProcessor(options);
 
-const result = processor.exec({
+processor.exec({
   longitude: 'gt:35,lt:34',
   latitude: 'lt:-92,gte:-94'
 });
 
-console.log(result);
 /*
 {
   filter: {
@@ -626,32 +518,3 @@ console.log(result);
 }
 /*
 ```
-
----
-
-## Notes
-
-### createProcessor(options)
-
-A processor that is using the default options will always have the `req.qproc.filter` value set to `{}`, so be careful.
-
-### Missing or Empty req.query
-
-When a processor executes on a request that has a missing or empty `req.query` input, the `req.qproc` result will look like this...
-
-```js
-{
-  filter: {},
-  limit: 0,
-  skip: 0,
-  sort: {}
-}
-```
-
-These are valid MongoDB query parameters but probably shouldn't be used since it would result in every document being returned. It is up to you to make sure that properties, like `limit`, are clamped to whatever min/max you think are necessary.
-
----
-
-## To Do
-
-- All caught up.
