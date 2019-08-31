@@ -60,7 +60,7 @@ const options = {
       type: qproc.ObjectId,
       alias: "id"
     },
-    type: qproc.String,
+    category: qproc.String,
     date: qproc.Date,
     count: qproc.Int,
     cost: qproc.Float
@@ -70,7 +70,7 @@ const options = {
 const proc = qproc.createProcessor(options);
 
 const q = {
-  type: "in:a,b",
+  category: "in:a,b",
   date: "gt:2018-01-01,lt:2019-01-01",
   count: "lt:1000",
   cost: "gte:299.99"
@@ -109,7 +109,7 @@ const qp = qproc.createMiddleware({
       type: qproc.ObjectId,
       alias: 'id'
     },
-    type: qproc.String,
+    category: qproc.String,
     date: qproc.Date,
     count: qproc.Int,
     cost: qproc.Float
@@ -203,7 +203,7 @@ const options = {
       type: qproc.ObjectId,
       alias: 'id'
     },
-    type: qproc.String,
+    category: qproc.String,
     date: {
       type: qproc.Date,
       default: () => new Date()
@@ -248,11 +248,13 @@ const options = {
 
 ### Alias
 
-Define one or more aliases for any field. Aliased fields are ignored if the field they are an alias for already exists in the query object. Wildcards are not supported in aliases.
+Define one or more aliases for a field in the field definition or in the `alias` option. Aliased fields are ignored if the field they are an alias for already exists in the query object. Wildcards are not supported in aliases.
+
+Defining aliases in the field definition:
 
 ```js
 const qproc = require("qproc-mongo");
-const options = {
+const processor = qproc.createProcessor({
   fields: {
     _id: {
       type: qproc.ObjectId
@@ -267,18 +269,30 @@ const options = {
       alias: ['latitude', 'lat', 'y']
     }
   },
-};
+});
+```
 
-const processor = qproc.createProcessor(options);
+Defining aliases in the `alias` option:
+
+```js
+const qproc = require("qproc-mongo");
+const processor = qproc.createProcessor({
+  fields: {
+    _id: qproc.ObjectId
+  },
+  alias: {
+    id: "_id"
+  }
+});
 ```
 
 ### Keys
 
-If you need to have different key identifiers, other than `limit`, `skip`, `sort`, and `search`, you can set them in the options. The keys you specify will be the same in the qproc result.
+Keys for `limit`, `skip`, `sort`, and `search` can be customized in the options. The keys you define will be the same in the qproc result.
 
 ```js
 const qproc = require("qproc-mongo");
-const options = {
+const processor = qproc.createProcessor({
   fields: {
     _id: {
       type: qproc.ObjectId,
@@ -289,9 +303,21 @@ const options = {
   skipKey: "offset",
   sortKey: "orderBy",
   searchKey: "q"
-};
+});
 
-const processor = qproc.createMiddleware(options);
+processor.exec({
+  count: '10',
+  offset: '20',
+  orderBy: 'asc:date'
+});
+/*
+{
+  filter: {...},
+  count: 10,
+  offset: 20,
+  orderBy: {date: 1}
+}
+*/
 ```
 
 ---
@@ -303,7 +329,7 @@ const processor = qproc.createMiddleware(options);
 **Request Query String**
 
 ```
-?type=music
+?type=a&date=ne:null
 ```
 
 **qproc Result**
@@ -311,7 +337,8 @@ const processor = qproc.createMiddleware(options);
 ```js
 {
   filter: {
-    type: {$eq: 'music'}
+    type: {$eq: 'a'},
+    date: {$ne: null}
   },
   /* omitted */
 }
@@ -487,25 +514,22 @@ Example options to query nested fields:
 
 ```js
 const qproc = require('qproc-mongo');
-
-const options = {
+const processor = qproc.createProcessor({
   fields: {
-    'location.coordinates.0': qproc.Float,
-    'location.coordinates.1': qproc.Float
-  },
-  alias: {
-    longitude: 'location.coordinates.0',
-    latitude: 'location.coordinates.1'
+    'location.coordinates.0': {
+      type: qproc.Float,
+      alias: ['longitude', 'lng', 'x']
+    },
+    'location.coordinates.1': {
+      type: qproc.Float,
+      alias: ['latitude', 'lat', 'y']
   }
-};
-
-const processor = qproc.createProcessor(options);
+});
 
 processor.exec({
   longitude: 'gt:35,lt:34',
   latitude: 'lt:-92,gte:-94'
 });
-
 /*
 {
   filter: {
