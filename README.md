@@ -4,6 +4,23 @@ Target Node v6.4+
 
 `qproc-mongo` creates processors that convert query objects into MongoDB queries.
 
+## Table of Contents
+
+- [Features](#features)
+- [Install](#install)
+- [Usage](#usage)
+- [Operators](#operators)
+- [Options](#options)
+  - [Fields](#fields)
+  - [Alias](#alias)
+  - [Defaults](#defaults)
+  - [Wildcards](#wildcards)
+  - [Keys](#keys)
+- [Examples](#examples)
+- [Nested Fields](#nested-fields)
+
+---
+
 ## Features
 
 - Easy configuration.
@@ -21,20 +38,6 @@ Target Node v6.4+
 - Supports wildcards for nested fields.
 
 - Easy to add a query processor to your Express/Connect routes.
-
-## Table of Contents
-
-- [Install](#install)
-- [Usage](#usage)
-- [Operators](#operators)
-- [Options](#options)
-  - [Fields](#fields)
-  - [Alias](#alias)
-  - [Defaults](#defaults)
-  - [Wildcards](#wildcards)
-  - [Keys](#keys)
-- [Examples](#examples)
-- [Nested Fields](#nested-fields)
 
 ---
 
