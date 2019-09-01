@@ -34,7 +34,7 @@ Target Node v6.4+
   - [Wildcards](#wildcards)
   - [Keys](#keys)
 - [Examples](#examples)
-- [Nested Fields](#nested-documents)
+- [Nested Fields](#nested-fields)
 
 ---
 
@@ -149,7 +149,7 @@ app.use('/api', qp, (req, res) => {
 
 | Operator | Description                                                  | Example Query String    |
 | -------- | ------------------------------------------------------------ | ----------------------- |
-| eq       | Equal                                                        | `?field=value`       |
+| eq       | Equal                                                        | `?field=value`          |
 | ne       | Not equal                                                    | `?field=ne:value`       |
 | in       | In a list of values - Multiple values separated by a `,`     | `?field=in:a,b,c`       |
 | nin      | Not in a list of values - Multiple values separated by a `,` | `?field=nin:a,b,c`      |
@@ -537,7 +537,7 @@ Example database record:
 }
 ```
 
-Example options to query nested fields:
+Example options to support nested fields:
 
 ```js
 const qproc = require('qproc-mongo');
