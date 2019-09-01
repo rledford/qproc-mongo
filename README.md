@@ -26,7 +26,7 @@ Target Node v6.4+
 
 - [Install](#install)
 - [Usage](#usage)
-- [Supported Operators](#supported-operators)
+- [Operators](#operators)
 - [Options](#options)
   - [Fields](#fields)
   - [Alias](#alias)
@@ -143,7 +143,7 @@ app.use('/api', qp, (req, res) => {
 
 ---
 
-## Supported Operators
+## Operators
 
 ### Filter Operators
 
