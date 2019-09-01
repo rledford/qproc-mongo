@@ -80,7 +80,7 @@ proc.exec(q);
 /*
 {
   filter: {
-    type: { '$in': ['a', 'b'] },
+    category: { '$in': ['a', 'b'] },
     date:
     { '$gt': '2018-01-01T00:00:00.000Z',
       '$lt': '2019-01-01T00:00:00.000Z' },
@@ -148,7 +148,7 @@ app.use('/api', qp, (req, res) => {
 
 | Operator | Description                                                  | Example Query String    |
 | -------- | ------------------------------------------------------------ | ----------------------- |
-| eq       | Equal                                                        | `?field=eq:value`       |
+| eq       | Equal                                                        | `?field=value`       |
 | ne       | Not equal                                                    | `?field=ne:value`       |
 | in       | In a list of values - Multiple values separated by a `,`     | `?field=in:a,b,c`       |
 | nin      | Not in a list of values - Multiple values separated by a `,` | `?field=nin:a,b,c`      |
@@ -195,7 +195,7 @@ When defining the field type, use the types available in the `qproc-mongo` modul
 
 ### Fields
 
-Fields define which fields should be allowed in the filter result and what type they are expected to be. It's also possible to define the default value, with a single value or a function that returns a value, for a field if it is not found in the query object as well as one or more aliases for each field name.
+Define which fields are allowed in the filter result and what type they are expected to be.
 
 ```js
 const qproc = require("qproc-mongo");
