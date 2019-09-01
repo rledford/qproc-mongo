@@ -2,7 +2,7 @@
 
 Target Node v6.4+
 
-`qproc-mongo` creates query object processors that translate query objects into MongoDB queries.
+`qproc-mongo` creates processors that translate query objects into MongoDB queries.
 
 ## Features
 
