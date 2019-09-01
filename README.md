@@ -183,17 +183,19 @@ The sort order operators need to be _before_ the field name they will operate on
 
 ### Field Types
 
-| Type     |                | Value      |
-| -------- | -------------- | ---------- |
-| Int      | qproc.Int      | 'int'      |
-| Float    | qproc.Float    | 'float'    |
-| String   | qproc.String   | 'string'   |
-| Boolean  | qproc.Boolean  | 'boolean'  |
-| ObjectId | qproc.ObjectId | 'objectId' |
+When defining the field type, use the types available in the `qproc-mongo` module or use the below values directly.
+
+| Type     | Value      | `qproc = require('qproc-mongo')` |
+| -------- | ---------- | -------------------------------- |
+| Int      | 'int'      | qproc.Int                        |
+| Float    | 'float'    | qproc.Float                      |
+| String   | 'string'   | qproc.String                     |
+| Boolean  | 'boolean'  | qproc.Boolean                    |
+| ObjectId | 'objectId' | qproc.ObjectId                   |
 
 ### Fields
 
-Define which fields should be allowed and what type they are expected to be. It's also possible to set the default value, with a single value or a function that returns a value, for a field if it is not found in the query object.
+Fields define which fields should be allowed in the filter result and what type they are expected to be. It's also possible to define the default value, with a single value or a function that returns a value, for a field if it is not found in the query object as well as one or more aliases for each field name.
 
 ```js
 const qproc = require("qproc-mongo");
@@ -203,10 +205,12 @@ const options = {
       type: qproc.ObjectId,
       alias: 'id'
     },
-    category: qproc.String,
+    category: {
+      type: qproc.String
+    }
     date: {
       type: qproc.Date,
-      default: () => new Date()
+      alias: ['time', 'timestamp']
     }
     count: qproc.Int,
     cost: qproc.Float,
@@ -214,36 +218,6 @@ const options = {
 };
 
 const processor = qproc.createProcessor(options);
-```
-
-#### Wildcards
-
-Field definitions support wildcards for dynamically named fields as long as you know what type they will be.
-
-Example database record:
-
-```json
-{
-  "_id": "id",
-  "counts": {
-    "a": 100,
-    "b": 100,
-    "c": 125
-  }
-}
-```
-
-Define the options for `qproc-mongo` to query the nested fields.
-
-```js
-const qproc = require("qproc-mongo");
-
-const options = {
-  fields: {
-    _id: qproc.ObjectId,
-    "counts.*": qproc.Int
-  }
-};
 ```
 
 ### Alias
@@ -284,6 +258,58 @@ const processor = qproc.createProcessor({
     id: "_id"
   }
 });
+```
+
+### Defaults
+
+Field definitions support defaults which can be a value or a function that returns a value. Default values should be valid MongoDB filters.
+
+```js
+const qproc = require("qproc-mongo");
+const processor = qproc.createProcessor({
+  fields: {
+    _id: qproc.ObjectId,
+    date: {
+      type: qproc.Date,
+      default: () => {
+        return {
+          $gt: new Date(Date.now() - 30000),
+          $lt: new Date(Date.now())
+        };
+      }
+    }
+  }
+});
+```
+
+#### Wildcards
+
+Field definitions support nested field wildcards.
+
+Example database record:
+
+```json
+{
+  "_id": "id",
+  "counts": {
+    "a": 100,
+    "b": 100,
+    "c": 125
+  }
+}
+```
+
+Define options to query the nested fields.
+
+```js
+const qproc = require("qproc-mongo");
+
+const options = {
+  fields: {
+    _id: qproc.ObjectId,
+    "counts.*": qproc.Int
+  }
+};
 ```
 
 ### Keys
