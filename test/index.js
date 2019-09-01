@@ -1,29 +1,42 @@
 function separator() {
   console.log(
     Array(50)
-      .fill('*')
-      .join('')
+      .fill("*")
+      .join("")
   );
 }
 
-const qproc = require('../lib/qproc-mongo');
+const qproc = require("../lib/qproc-mongo");
 let options = {
   fields: {
     _id: qproc.ObjectId,
-    eventType: qproc.String,
-    eventName: qproc.String,
-    eventDate: qproc.Date,
-    description: qproc.String,
+    v: {
+      type: qproc.Date,
+      default: () => {
+        return {
+          $lt: new Date()
+        };
+      }
+    },
+    category: qproc.String,
+    name: qproc.String,
+    date: {
+      type: qproc.Date
+    },
+    description: {
+      type: qproc.String,
+      alias: ["info", "desc"]
+    },
     sponsors: qproc.String,
-    ticketCount: qproc.Int,
-    ticketCost: qproc.Float,
-    isConfirmed: qproc.Boolean,
-    'nested.*': qproc.Int,
-    'multiple.*.wildcards.*': qproc.Float,
-    'adjacent.wildcard.*.*': qproc.String
+    count: qproc.Int,
+    cost: qproc.Float,
+    confirmed: qproc.Boolean,
+    "nested.*": qproc.Int,
+    "multiple.*.wildcards.*": qproc.Float,
+    "adjacent.wildcard.*.*": qproc.String
   },
   alias: {
-    id: '_id'
+    id: "_id"
   }
 };
 
@@ -31,19 +44,19 @@ const test = qproc.createMiddleware(options);
 
 const req = {
   query: {
-    id: 'alias for _id',
-    eventType: 'in:music,sports,null',
-    eventDate: 'gt:2018-01-01,lt:2019-01-01',
-    description: 'regex:/^mastodon/gi',
-    sponsors: 'all:Gibson,Fender',
-    ticketCount: 'lt:1000',
-    ticketCost: 'gte:299.99',
-    sort: 'desc:eventDate,asc:ticketCount',
-    limit: '100',
-    isConfirmed: 'true',
-    'nested.ineger': 'gt:1000',
-    'multiple.nested.wildcards.integer': 'gt:50',
-    'adjacent.wildcard.test.test': 'test'
+    id: "alias for _id",
+    category: "in:music,sports,null",
+    date: "gt:2018-01-01,lt:2019-01-01",
+    description: "regex:/^mastodon/gi",
+    sponsors: "all:Gibson,Fender",
+    count: "lt:1000",
+    cost: "gte:299.99",
+    sort: "desc:date,asc:count",
+    limit: "100",
+    confirmed: "true",
+    "nested.integer": "gt:1000",
+    "multiple.nested.wildcards.integer": "gt:50",
+    "adjacent.wildcard.test.test": "test"
   }
 };
 const res = {};
@@ -54,13 +67,13 @@ const next = function(err) {
 };
 
 separator();
-console.log('TEST: process query parameters in the request');
-console.log('EXPECTED RESULT: valid MongoDB query parameters');
+console.log("TEST: process query parameters in the request");
+console.log("EXPECTED RESULT: valid MongoDB query parameters");
 
-console.log('****** REQUEST QUERY INPUT *******\n', req.query);
+console.log("****** REQUEST QUERY INPUT *******\n", req.query);
 test(req, res, next);
 console.log(
-  '********* QPROC OUTPUT **********\n',
+  "********* QPROC OUTPUT **********\n",
   JSON.stringify(req.qproc, null, 2)
 );
 separator();
