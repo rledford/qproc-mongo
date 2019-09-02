@@ -31,13 +31,13 @@ Target Node v6.4+
 
 - Ensures that only the fields defined in the options are allowed in the MongoDB filter.
 
-- Supports one or more aliases for each field.
-
-- Supports default field values.
+- Allows one or more aliases for each field.
 
 - Supports wildcards for nested fields.
 
-- Easy to add a query processor to your Express/Connect routes.
+- Allows setting default values to be used when query parameters are missing.
+
+- Easy to add to Express/Connect routes.
 
 ---
 
@@ -104,32 +104,26 @@ proc.exec(q);
 
 ```js
 // require module
-const qproc = require('qproc-mongo');
+const qproc = require("qproc-mongo");
 
 // create middleware
 const qp = qproc.createMiddleware({
   fields: {
     _id: {
       type: qproc.ObjectId,
-      alias: 'id'
+      alias: "id"
     },
     category: qproc.String,
     date: qproc.Date,
     count: qproc.Int,
     cost: qproc.Float
   }
-}, (err, req, res, next) => {
-  res.status(400).json({
-    error: {
-      status: 400,
-      message: err.message
-    }
-  }););
+});
 
-app.use('/api', qp, (req, res) => {
+app.use("/api", qp, (req, res) => {
   const { filter, limit, skip, sort } = req.qproc;
 
-  db.collection('events')
+  db.collection("events")
     .find(filter)
     .limit(limit)
     .skip(skip)
@@ -288,7 +282,7 @@ const processor = qproc.createProcessor({
 
 #### Wildcards
 
-Field definitions support nested field wildcards.
+Field definitions support nested wildcards.
 
 Example database record:
 
@@ -296,9 +290,17 @@ Example database record:
 {
   "_id": "id",
   "counts": {
-    "a": 100,
-    "b": 100,
-    "c": 125
+    "a": 1,
+    "b": 1,
+    "c": 1
+  },
+  "metrics": {
+    "example_1": {
+      "count": 1
+    },
+    "example_2": {
+      "count": 2
+    }
   }
 }
 ```
@@ -311,7 +313,8 @@ const qproc = require("qproc-mongo");
 const options = {
   fields: {
     _id: qproc.ObjectId,
-    "counts.*": qproc.Int
+    "counts.*": qproc.Int,
+    "metrics.*.counts": qproc.Int
   }
 };
 ```
