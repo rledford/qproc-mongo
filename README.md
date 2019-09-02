@@ -37,7 +37,7 @@ Target Node v6.4+
 
 - Allows setting default values to be used when query parameters are missing.
 
-- Easy to add to Express/Connect routes.
+- Easy to add middleware to Express/Connect routes.
 
 ---
 
