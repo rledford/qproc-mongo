@@ -1,6 +1,6 @@
 {
   "name": "qproc-mongo",
-  "version": "2.4.4",
+  "version": "3.0.0",
   "description": "Creates query object processors that convert query objects into MongoDB queries.",
   "main": "index.js",
   "scripts": {
