@@ -4,6 +4,28 @@ Target Node v6.4+
 
 `qproc-mongo` creates processors that convert query objects into MongoDB queries.
 
+## Upgrading from v2.x
+
+v3 introduced a new `meta` option. This new option supports defaults and aliases. In order to support this functionality for both `meta` and `fields` options, aliases and defaults must be defined within the `meta` and `fields` definitions.
+
+```js
+const options = {
+  fields: {
+    _id: {
+      type: qproc.ObjectId,
+      alias: ['id']
+    }
+  },
+  meta: {
+    flag: {
+      type: qproc.Boolean,
+      alias: ['f'],
+      default: false
+    }
+  }
+};
+```
+
 ## Table of Contents
 
 - [Features](#features)
