@@ -38,7 +38,7 @@ let options = {
   meta: {
     calculateTotals: {
       type: 'boolean',
-      alias: ['calc', 'ct']
+      alias: 'ct'
     }
   }
 };
@@ -60,7 +60,7 @@ const req = {
     'nested.integer': 'gt:1000',
     'multiple.nested.wildcards.integer': 'gt:50',
     'adjacent.wildcard.test.test': 'test',
-    ct: 'true'
+    ct: 'false'
   }
 };
 const res = {};
