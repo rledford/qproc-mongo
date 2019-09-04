@@ -12,6 +12,7 @@ Target Node v6.4+
 - [Operators](#operators)
 - [Options](#options)
   - [Fields](#fields)
+  - [Meta](#meta)
   - [Alias](#alias)
   - [Defaults](#defaults)
   - [Wildcards](#wildcards)
@@ -56,13 +57,13 @@ npm install qproc-mongo
 ### Processor
 
 ```js
-const qproc = require("qproc-mongo");
+const qproc = require('qproc-mongo');
 
 const options = {
   fields: {
     _id: {
       type: qproc.ObjectId,
-      alias: "id"
+      alias: 'id'
     },
     category: qproc.String,
     date: qproc.Date,
@@ -74,10 +75,10 @@ const options = {
 const proc = qproc.createProcessor(options);
 
 const q = {
-  category: "in:a,b",
-  date: "gt:2018-01-01,lt:2019-01-01",
-  count: "lt:1000",
-  cost: "gte:299.99"
+  category: 'in:a,b',
+  date: 'gt:2018-01-01,lt:2019-01-01',
+  count: 'lt:1000',
+  cost: 'gte:299.99'
 };
 
 proc.exec(q);
@@ -104,14 +105,14 @@ proc.exec(q);
 
 ```js
 // require module
-const qproc = require("qproc-mongo");
+const qproc = require('qproc-mongo');
 
 // create middleware
 const qp = qproc.createMiddleware({
   fields: {
     _id: {
       type: qproc.ObjectId,
-      alias: "id"
+      alias: 'id'
     },
     category: qproc.String,
     date: qproc.Date,
@@ -120,10 +121,10 @@ const qp = qproc.createMiddleware({
   }
 });
 
-app.use("/api", qp, (req, res) => {
+app.use('/api', qp, (req, res) => {
   const { filter, limit, skip, sort } = req.qproc;
 
-  db.collection("events")
+  db.collection('events')
     .find(filter)
     .limit(limit)
     .skip(skip)
@@ -170,14 +171,14 @@ The sort order operators need to be _before_ the field name they will operate on
 
 ## Options
 
-| Option    | Default  | Description                                                                                                    |
-| --------- | -------- | -------------------------------------------------------------------------------------------------------------- |
-| fields    | `{}`     | key:value pairs that will identify query filter fields and their associated types, defaults, and aliases       |
-| alias     | `{}`     | key:value pairs where `key` is the aliased field name and `value` is what field in `fields` it is an alias for |
-| limitKey  | `limit`  | used to identify the limit parameter                                                                           |
-| skipKey   | `skip`   | used to identify the skip parameter                                                                            |
-| sortKey   | `sort`   | used to identify the sort parameter                                                                            |
-| searchKey | `search` | used to identify the search parameter                                                                          |
+| Option    | Default  | Description                                                                                         |
+| --------- | -------- | --------------------------------------------------------------------------------------------------- |
+| fields    | `{}`     | key:value pairs that identify query filter fields and their associated types, defaults, and aliases |
+| meta      | `{}`     | key:value pairs that identify fields that will be allowed in the `meta` property                    |
+| limitKey  | `limit`  | used to identify the limit parameter                                                                |
+| skipKey   | `skip`   | used to identify the skip parameter                                                                 |
+| sortKey   | `sort`   | used to identify the sort parameter                                                                 |
+| searchKey | `search` | used to identify the search parameter                                                               |
 
 ### Field Types
 
@@ -218,9 +219,36 @@ const options = {
 const processor = qproc.createProcessor(options);
 ```
 
+### Meta
+
+Meta definitions keep non-filter related fields out of the field definitions so they don't have to be culled from the filter before executing a query. Meta definitions are defined the same way as field definitions, but meta definition default values do not have to be MongoDB filters.
+
+```js
+const qproc = require('qproc-mongo');
+const options = {
+  fields: {
+    _id: {
+      type: qproc.ObjectId,
+      alias: 'id'
+    },
+    category: {
+      type: qproc.String
+    }
+  },
+  meta: {
+    calculateTotals: {
+      type: qproc.Boolean,
+      default: false
+    }
+  }
+};
+
+const processor = qproc.createProcessor(options);
+```
+
 ### Alias
 
-Define one or more aliases for a field in the field definition or in the `alias` option. Aliased fields are ignored if the field they are an alias for already exists in the query object. Wildcards are not supported in aliases.
+Define one or more aliases for a field in the field definition. Aliased fields are ignored if the field they are an alias for already exists in the query object. Wildcards are not supported in aliases.
 
 Defining aliases in the field definition:
 
@@ -244,26 +272,12 @@ const processor = qproc.createProcessor({
 });
 ```
 
-Defining aliases in the `alias` option:
-
-```js
-const qproc = require("qproc-mongo");
-const processor = qproc.createProcessor({
-  fields: {
-    _id: qproc.ObjectId
-  },
-  alias: {
-    id: "_id"
-  }
-});
-```
-
 ### Defaults
 
 Field definitions support defaults which can be a value or a function that returns a value. Default values should be valid MongoDB filters.
 
 ```js
-const qproc = require("qproc-mongo");
+const qproc = require('qproc-mongo');
 const processor = qproc.createProcessor({
   fields: {
     _id: qproc.ObjectId,
@@ -308,13 +322,13 @@ Example database record:
 Define options to query the nested fields.
 
 ```js
-const qproc = require("qproc-mongo");
+const qproc = require('qproc-mongo');
 
 const options = {
   fields: {
     _id: qproc.ObjectId,
-    "counts.*": qproc.Int,
-    "metrics.*.counts": qproc.Int
+    'counts.*': qproc.Int,
+    'metrics.*.counts': qproc.Int
   }
 };
 ```
@@ -479,7 +493,7 @@ processor.exec({
 {
   filter: {
     type: {
-      $nin: ["a", "b"];
+      $nin: ['a', 'b'];
     }
   }
   /* omitted */

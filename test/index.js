@@ -35,8 +35,11 @@ let options = {
     'multiple.*.wildcards.*': qproc.Float,
     'adjacent.wildcard.*.*': qproc.String
   },
-  alias: {
-    id: '_id'
+  meta: {
+    calculateTotals: {
+      type: 'boolean',
+      alias: ['calc', 'ct']
+    }
   }
 };
 
@@ -56,7 +59,8 @@ const req = {
     confirmed: 'true',
     'nested.integer': 'gt:1000',
     'multiple.nested.wildcards.integer': 'gt:50',
-    'adjacent.wildcard.test.test': 'test'
+    'adjacent.wildcard.test.test': 'test',
+    ct: 'true'
   }
 };
 const res = {};
