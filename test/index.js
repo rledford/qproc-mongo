@@ -56,6 +56,7 @@ const req = {
     cost: 'gte:299.99',
     sort: 'desc:date,asc:count',
     limit: '100',
+    skip: '-25',
     confirmed: 'true',
     'nested.integer': 'gt:1000',
     'multiple.nested.wildcards.integer': 'gt:50',
