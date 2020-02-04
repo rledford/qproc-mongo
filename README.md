@@ -2,7 +2,7 @@
 
 Target Node v6.4+
 
-`qproc-mongo` creates processors that convert query objects into MongoDB queries.
+Creates processors that convert query objects into MongoDB queries. Supports common MongoDB operators, wildcards, and more.
 
 ## Upgrading from v2.x
 
@@ -216,7 +216,7 @@ When defining the field type, use the types available in the `qproc-mongo` modul
 
 ### Fields
 
-Define which fields are allowed in the filter result and what type they are expected to be.
+Define which fields are allowed in the filter result and what type they are expected to be. Default values, including functions, should return valid MongoDB query filters.
 
 ```js
 const qproc = require("qproc-mongo");
@@ -296,7 +296,7 @@ const processor = qproc.createProcessor({
 
 ### Defaults
 
-Field definitions support defaults which can be a value or a function that returns a value. Default values should be valid MongoDB filters.
+Field definitions support defaults which can be a value or a function that returns a value. Default values, including functions, should return valid MongoDB filters.
 
 ```js
 const qproc = require('qproc-mongo');
