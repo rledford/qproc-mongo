@@ -40,7 +40,8 @@ let options = {
       type: 'boolean',
       alias: 'ct'
     }
-  }
+  },
+  projections: ['other']
 };
 
 const test = qproc.createMiddleware(options);
@@ -61,7 +62,8 @@ const req = {
     'nested.integer': 'gt:1000',
     'multiple.nested.wildcards.integer': 'gt:50',
     'adjacent.wildcard.test.test': 'test',
-    ct: 'false'
+    ct: 'false',
+    proj: '+cost,other'
   }
 };
 const res = {};
