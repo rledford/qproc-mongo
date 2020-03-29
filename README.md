@@ -317,9 +317,9 @@ const processor = qproc.createProcessor({
 
 ### Projections
 
-**Important:** Do not blindly use the projection in the `qproc` result for records that contain sensitive data. You should use your own projections on the server side for collections containing sensitive data like passwords, salts, hashes, etc.
+**Important:** Do not blindly use the projection in the `qproc` result for documents that contain sensitive data. You should use your own projections on the server side for collections containing sensitive data like passwords, salts, hashes, etc.
 
-Field projections control which fields are included or excluded in the records returned from a query. All field definitions, by default, are _allowed_ to be used in projections. To disallow a field from being used in projections, set the `projection` property of the field to `false`.
+Field projections control which fields are included or excluded in the documents returned from a query. All field definitions, by default, are _allowed_ to be used in projections. To disallow a field from being used in projections, set the `projection` property of the field to `false`.
 
 _NOTE_: [Wildcards](#wildcards) are currently not supported for field projections.
 
