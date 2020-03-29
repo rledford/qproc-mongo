@@ -6,7 +6,7 @@ Creates processors that convert query objects into MongoDB queries. Supports com
 
 ## v4
 
-Added support for field projections and fixed issues in the internal options builder to work with newer versions of NodeJS.
+Added support for field [projections](#projections) and fixed issues in the internal options builder to work with newer versions of NodeJS.
 
 ## Table of Contents
 
@@ -395,7 +395,7 @@ const options = {
 
 ### Keys
 
-Keys for `limit`, `skip`, `sort`, and `search` can be customized in the options. The keys you define will be the same in the qproc result.
+Keys for `limit`, `skip`, `sort`, `proj`, and `search` can be customized in the options. The keys you define will be the same in the qproc result.
 
 ```js
 const qproc = require("qproc-mongo");
@@ -409,20 +409,23 @@ const processor = qproc.createProcessor({
   limitKey: "count",
   skipKey: "offset",
   sortKey: "orderBy",
+  projKey: "projection",
   searchKey: "q"
 });
 
 processor.exec({
   count: '10',
   offset: '20',
-  orderBy: 'asc:date'
+  orderBy: 'asc:date',
+  projection: '-field'
 });
 /*
 {
   filter: {...},
   count: 10,
   offset: 20,
-  orderBy: {date: 1}
+  orderBy: {date: 1},
+  projection: {field: 0}
 }
 */
 ```
