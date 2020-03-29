@@ -4,27 +4,9 @@ Target Node v6.4+
 
 Creates processors that convert query objects into MongoDB queries. Supports common MongoDB operators, wildcards, and more.
 
-## Upgrading from v2.x
+## v4
 
-v3 introduced a new `meta` option. This new option supports defaults and aliases. In order to support this functionality for both `meta` and `fields` options, aliases and defaults must be defined within the `meta` and `fields` definitions.
-
-```js
-const options = {
-  fields: {
-    _id: {
-      type: qproc.ObjectId,
-      alias: ['id']
-    }
-  },
-  meta: {
-    flag: {
-      type: qproc.Boolean,
-      alias: ['f'],
-      default: false
-    }
-  }
-};
-```
+Added support for field projections and fixed issues in the internal options builder to work with newer versions of NodeJS.
 
 ## Table of Contents
 
@@ -37,6 +19,7 @@ const options = {
   - [Meta](#meta)
   - [Alias](#alias)
   - [Defaults](#defaults)
+  - [Projections](#projections)
   - [Wildcards](#wildcards)
   - [Keys](#keys)
 - [Examples](#examples)
@@ -69,7 +52,9 @@ const options = {
 ## Install
 
 ```
+
 npm install qproc-mongo
+
 ```
 
 ---
