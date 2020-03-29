@@ -417,7 +417,7 @@ processor.exec({
   count: '10',
   offset: '20',
   orderBy: 'asc:date',
-  projection: '-field'
+  projection: '-id'
 });
 /*
 {
@@ -425,7 +425,7 @@ processor.exec({
   count: 10,
   offset: 20,
   orderBy: {date: 1},
-  projection: {field: 0}
+  projection: {_id: 0}
 }
 */
 ```
