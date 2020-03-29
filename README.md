@@ -60,6 +60,8 @@ const options = {
 
 - Allows setting default values to be used when query parameters are missing.
 
+- Supports field projections
+
 - Easy to add middleware to Express/Connect routes.
 
 ---
@@ -189,6 +191,17 @@ The sort order operators need to be _before_ the field name they will operate on
 | asc      | Ascending   | `?field=value&sort=asc:field`  |
 | desc     | Descending  | `?field=value&sort=desc:field` |
 
+### Projection Operators
+
+The projection operators need to be _before_ the field to include or exclude in the query result.
+
+| Operator | Description                                  | Example Query String                                  |
+| -------- | -------------------------------------------- | ----------------------------------------------------- |
+| +        | Include (default if no operator is provided) | `field=value&proj=+field` or `field=value&proj=field` |
+| -        | Exclude                                      | `field=value&proj=-field`                             |
+
+At this time, if field projections are provided, they should _all_ use the same operator, otherwise the default projection `{}` will be in the `qproc` result. This is because MongoDB does not support the combination of include and exclude statements in projections. MongoDB does support different include/exclude statements for the `_id` field, but this is not supported in `qproc-mongo` at this time.
+
 ---
 
 ## Options
@@ -200,6 +213,7 @@ The sort order operators need to be _before_ the field name they will operate on
 | limitKey  | `limit`  | used to identify the limit parameter                                                                |
 | skipKey   | `skip`   | used to identify the skip parameter                                                                 |
 | sortKey   | `sort`   | used to identify the sort parameter                                                                 |
+| projKey   | `proj`   | used to identify the field projection parameter                                                     |
 | searchKey | `search` | used to identify the search parameter                                                               |
 
 ### Field Types
@@ -313,6 +327,43 @@ const processor = qproc.createProcessor({
       }
     }
   }
+});
+```
+
+### Projections
+
+**Important:** Do not blindly use the projection in the `qproc` result for records that contain sensitive data. You should use your own projections on the server side for collections containing sensitive data like passwords, salts, hashes, etc.
+
+Field projections control which fields are included or excluded in the records returned from a query. All field definitions, by default, are _allowed_ to be used in projections. To disallow a field from being used in projections, set the `projection` property of the field to `false`.
+
+```js
+const qproc = require('qproc-mongo');
+const processor = qproc.createProcessor({
+  fields: {
+    _id: {
+      type: qproc.ObjectId,
+      projection: false // will not be allowed
+    },
+    name: {
+      type: qproc.String // will be allowed
+    }
+  }
+});
+```
+
+It is possible to allow projections for fields that are not in the field definitions. This is useful for allowing non-queryable fields (any field not in the field definitions) to still be selectively inlcuded or excluded by a user.
+
+```js
+const qproc = require('qproc-mongo');
+const processor = qproc.createProcessor({
+  fields: {
+    _id: {
+      type: qproc.ObjectId,
+      projection: false
+    },
+    name: qproc.String
+  },
+  projections: ['type']
 });
 ```
 
