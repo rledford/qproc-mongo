@@ -321,6 +321,8 @@ const processor = qproc.createProcessor({
 
 Field projections control which fields are included or excluded in the records returned from a query. All field definitions, by default, are _allowed_ to be used in projections. To disallow a field from being used in projections, set the `projection` property of the field to `false`.
 
+_NOTE_: [Wildcards](#wildcards) are currently not supported for field projections.
+
 ```js
 const qproc = require('qproc-mongo');
 const processor = qproc.createProcessor({
