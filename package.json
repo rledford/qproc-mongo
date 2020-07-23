@@ -1,6 +1,6 @@
 {
   "name": "qproc-mongo",
-  "version": "4.0.2",
+  "version": "4.1.0",
   "description": "Creates query object processors that convert query objects into MongoDB queries.",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,10 @@
     "searchparams",
     "string"
   ],
-  "author": "rledford",
+  "author": {
+    "name": "Ryan Ledford",
+    "url": "https://rledford.dev"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/rledford/qproc-mongo/issues"
