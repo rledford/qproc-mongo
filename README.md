@@ -432,6 +432,25 @@ processor.exec({
 
 ---
 
+## Info
+
+The `qproc` result now has an `info` property that contains information about the query. This can be useful for metrics, safety, and security. The data in the `info` property looks like this:
+
+```js
+{
+  "fieldCount": 10,
+  "aliasCount": 2,
+  "metaCount": 1,
+  "projCount": 2,
+  "regexCount": 1,
+  "regexList": [
+    /^mastodon/gi
+  ]
+}
+```
+
+_IMPORTANT_: For system security and stability, the `regexCount` and the `regexList` should be checked to ensure that there aren't too many _and_ that the expressions are not malicious. Use a regex analyzer, like [safe-regex](https://www.npmjs.com/package/safe-regex), to check if a regex is safe.
+
 ## Examples
 
 ### Basic Filter
