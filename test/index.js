@@ -1,15 +1,14 @@
 function separator() {
-  console.log(
-    Array(50)
-      .fill('*')
-      .join('')
-  );
+  console.log(Array(50).fill('*').join(''));
 }
 
 const qproc = require('../lib/qproc-mongo');
 let options = {
   fields: {
-    _id: qproc.ObjectId,
+    _id: {
+      type: qproc.ObjectId,
+      alias: 'id'
+    },
     v: {
       type: qproc.Date,
       default: () => {
@@ -51,7 +50,7 @@ const req = {
     id: 'alias for _id',
     category: 'in:music,sports,null',
     date: 'gt:2018-01-01,lt:2019-01-01',
-    description: 'regex:/^mastodon/gi',
+    desc: 'regex:/^mastodon/gi',
     sponsors: 'all:Gibson,Fender',
     count: 'lt:1000',
     cost: 'gte:299.99',
@@ -67,7 +66,7 @@ const req = {
   }
 };
 const res = {};
-const next = function(err) {
+const next = function (err) {
   if (err) {
     console.log(err);
   }
